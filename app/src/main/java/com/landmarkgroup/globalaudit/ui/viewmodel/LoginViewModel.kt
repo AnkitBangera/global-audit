@@ -10,7 +10,9 @@ import com.landmarkgroup.globalaudit.data.model.AuthData
 import com.landmarkgroup.globalaudit.data.model.AuthorizationResponse
 import com.landmarkgroup.globalaudit.data.model.SharedAuthData
 import com.landmarkgroup.globalaudit.data.model.UserFacility
+import com.landmarkgroup.globalaudit.utils.AppSettings
 import com.landmarkgroup.globalaudit.utils.AuthConstants
+import com.landmarkgroup.globalaudit.utils.DeviceUtils
 import com.landmarkgroup.globalaudit.utils.JwtUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,6 +42,9 @@ class LoginViewModel(
     private lateinit var serviceConfig: AuthorizationServiceConfiguration
 
     init {
+        // Initialize device ID on app startup (similar to Xamarin's ValidateDevice)
+        initializeDeviceId()
+        
         val sharedAuthData = SharedAuthData.getAuthData()
         if (sharedAuthData != null) {
             val idToken = sharedAuthData.idTokenKey
@@ -53,6 +58,22 @@ class LoginViewModel(
             Uri.parse("https://sts.landmarkgroup.com/adfs/oauth2/authorize"),
             Uri.parse("https://sts.landmarkgroup.com/adfs/oauth2/token")
         )
+    }
+
+    /**
+     * Initializes the device ID by retrieving it from device and storing it.
+     * Similar to Xamarin's ValidateDevice() method which calls:
+     * var currentDeviceId = DependencyService.Get<IDeviceService>().GetInfo();
+     * Settings.DeviceID = currentDeviceId;
+     */
+    private fun initializeDeviceId() {
+        try {
+            val currentDeviceId = DeviceUtils.getDeviceId(appContext)
+            AppSettings.setDeviceId(appContext, currentDeviceId)
+            Log.d("LoginViewModel", "Device ID initialized: $currentDeviceId")
+        } catch (e: Exception) {
+            Log.e("LoginViewModel", "Error initializing device ID", e)
+        }
     }
 
     fun initiateLogin() {
