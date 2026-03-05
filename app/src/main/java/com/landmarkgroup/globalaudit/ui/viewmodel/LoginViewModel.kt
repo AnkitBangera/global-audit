@@ -89,19 +89,37 @@ class LoginViewModel(
                 val idToken = tokenResponse.idToken
                 val expiresIn = tokenResponse.accessTokenExpirationTime ?: 0L
 
+                Log.d("LoginViewModel", "ADFS Login successful - Access Token: $accessToken")
+                Log.d("LoginViewModel", "ADFS Login successful - ID Token: $idToken")
                 Log.d("UserImageURL", "Starting profile image URL construction in LoginViewModel")
                 val userId = JwtUtils.extractUserId(idToken)
                 Log.d("UserImageURL", "Extracted userId for profile image: $userId")
-
-                val authData = AuthData(
-                    accessTokenKey = accessToken,
-                    idTokenKey = idToken,
-                    expiresOnKey = System.currentTimeMillis() + (expiresIn * 1000),
-                    usernameKey = JwtUtils.extractForKey(idToken, "given_name") + " " +
-                            JwtUtils.extractForKey(idToken, "family_name"),
-                    profilePictureUrl = null
-                )
-                SharedAuthData.setAuthData(authData)
+                // TODO: Implement profile image URL if needed
+                // val profileImageUrl = Constants.getUserImageUrl(userId)
+                
+                var sharedAuthData = SharedAuthData.getAuthData()
+                if (sharedAuthData == null) {
+                    sharedAuthData = AuthData(
+                        accessTokenKey = accessToken,
+                        idTokenKey = idToken,
+                        expiresOnKey = System.currentTimeMillis() + (expiresIn * 1000),
+                        selectedFacilityKey = null,
+                        usernameKey = JwtUtils.extractForKey(idToken, "given_name") + " " +
+                                JwtUtils.extractForKey(idToken, "family_name"),
+                        warehouseCodeKey = "",
+                        profilePictureUrl = null, // Can be set if profile image URL is needed
+                        permissableWarehouses = emptyList(),
+                        permissableFacilities = emptyList()
+                    )
+                } else {
+                    sharedAuthData.accessTokenKey = accessToken
+                    sharedAuthData.idTokenKey = idToken
+                    sharedAuthData.expiresOnKey = System.currentTimeMillis() + (expiresIn * 1000)
+                    sharedAuthData.usernameKey = JwtUtils.extractForKey(idToken, "given_name") + " " +
+                            JwtUtils.extractForKey(idToken, "family_name")
+                    // Keep existing profilePictureUrl if already set
+                }
+                SharedAuthData.setAuthData(sharedAuthData)
 
                 if (accessToken != null && idToken != null) {
                     authorizeWithBackend()
