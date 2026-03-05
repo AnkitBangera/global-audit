@@ -10,8 +10,10 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.landmarkgroup.globalaudit.data.model.SharedAuthData
 import com.landmarkgroup.globalaudit.ui.screens.*
 import com.landmarkgroup.globalaudit.ui.viewmodel.AuditViewModel
+import com.landmarkgroup.globalaudit.ui.viewmodel.LoginViewModel
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -25,18 +27,24 @@ sealed class Screen(val route: String) {
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    viewModel: AuditViewModel
+    auditViewModel: AuditViewModel,
+    loginViewModel: LoginViewModel
 ) {
-    // Ensure we start at Login screen on initial composition
-    // This handles cases where saved state might restore to a different screen
+    // Check auth state on startup
     LaunchedEffect(Unit) {
-        val backStackEntry = navController.currentBackStackEntry
-        val currentRoute = backStackEntry?.destination?.route
-        // Only navigate if we have a back stack entry and it's not Login
-        // If back stack is empty, NavHost will use startDestination
-        if (backStackEntry != null && currentRoute != Screen.Login.route) {
+        val authData = SharedAuthData.getAuthData()
+        val isAuthenticated = authData != null &&
+                !authData.idTokenKey.isNullOrEmpty() &&
+                authData.expiresOnKey > System.currentTimeMillis() &&
+                !authData.selectedFacilityKey.isNullOrEmpty()
+        
+        if (!isAuthenticated) {
             navController.navigate(Screen.Login.route) {
-                // Clear entire back stack and navigate to Login
+                popUpTo(0) { inclusive = true }
+            }
+        } else {
+            // If authenticated, navigate to main screen
+            navController.navigate(Screen.GlobalStockAudit.route) {
                 popUpTo(0) { inclusive = true }
             }
         }
@@ -48,8 +56,11 @@ fun NavGraph(
     ) {
         composable(Screen.Login.route) {
             LoginScreen(
-                onLoginClick = {
-                    navController.navigate(Screen.GlobalStockAudit.route)
+                viewModel = loginViewModel,
+                onLoginSuccess = {
+                    navController.navigate(Screen.GlobalStockAudit.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
                 }
             )
         }
@@ -68,17 +79,17 @@ fun NavGraph(
                     navController.popBackStack()
                 },
                 onZoneSelected = { zoneId ->
-                    viewModel.setZoneId(zoneId)
+                    auditViewModel.setZoneId(zoneId)
                     navController.navigate(Screen.LocationEntry.route)
                 }
             )
         }
         
         composable(Screen.LocationEntry.route) {
-            val auditData by viewModel.auditData.collectAsState()
-            val zoneId by viewModel.currentZoneId.collectAsState()
-            val locationId by viewModel.currentLocationId.collectAsState()
-            val quantity by viewModel.currentQuantity.collectAsState()
+            val auditData by auditViewModel.auditData.collectAsState()
+            val zoneId by auditViewModel.currentZoneId.collectAsState()
+            val locationId by auditViewModel.currentLocationId.collectAsState()
+            val quantity by auditViewModel.currentQuantity.collectAsState()
             val binCount = auditData?.bins?.size ?: 0
             
             var showCancelDialog by remember { mutableStateOf(false) }
@@ -88,10 +99,10 @@ fun NavGraph(
                 locationId = locationId,
                 quantity = quantity,
                 binCount = binCount,
-                onLocationIdChange = { viewModel.setLocationId(it) },
-                onQuantityChange = { viewModel.setQuantity(it) },
+                onLocationIdChange = { auditViewModel.setLocationId(it) },
+                onQuantityChange = { auditViewModel.setQuantity(it) },
                 onAddBin = {
-                    viewModel.addBin()
+                    auditViewModel.addBin()
                 },
                 onCancel = {
                     showCancelDialog = true
@@ -104,7 +115,7 @@ fun NavGraph(
                 showCancelDialog = showCancelDialog,
                 onDismissCancelDialog = { showCancelDialog = false },
                 onConfirmCancel = {
-                    viewModel.clearAudit()
+                    auditViewModel.clearAudit()
                     showCancelDialog = false
                     navController.navigate(Screen.ZoneSelection.route) {
                         popUpTo(Screen.ZoneSelection.route) { inclusive = true }
@@ -114,7 +125,7 @@ fun NavGraph(
         }
         
         composable(Screen.Summary.route) {
-            val auditDataState by viewModel.auditData.collectAsState()
+            val auditDataState by auditViewModel.auditData.collectAsState()
             val auditData = auditDataState
             
             if (auditData != null) {
@@ -126,7 +137,7 @@ fun NavGraph(
                         showCancelDialog = true
                     },
                     onConfirm = {
-                        viewModel.submitAudit()
+                        auditViewModel.submitAudit()
                         navController.navigate(Screen.Success.route) {
                             popUpTo(Screen.GlobalStockAudit.route) { inclusive = false }
                         }
@@ -134,7 +145,7 @@ fun NavGraph(
                     showCancelDialog = showCancelDialog,
                     onDismissCancelDialog = { showCancelDialog = false },
                     onConfirmCancel = {
-                        viewModel.clearAudit()
+                        auditViewModel.clearAudit()
                         showCancelDialog = false
                         navController.navigate(Screen.ZoneSelection.route) {
                             popUpTo(Screen.ZoneSelection.route) { inclusive = true }
@@ -145,7 +156,7 @@ fun NavGraph(
         }
         
         composable(Screen.Success.route) {
-            val auditDataState by viewModel.auditData.collectAsState()
+            val auditDataState by auditViewModel.auditData.collectAsState()
             val auditData = auditDataState
             
             if (auditData != null) {
@@ -153,7 +164,7 @@ fun NavGraph(
                     zoneId = auditData.zoneId,
                     binCount = auditData.bins.size,
                     onBackToDashboard = {
-                        viewModel.clearAudit()
+                        auditViewModel.clearAudit()
                         navController.navigate(Screen.GlobalStockAudit.route) {
                             popUpTo(Screen.GlobalStockAudit.route) { inclusive = true }
                         }
