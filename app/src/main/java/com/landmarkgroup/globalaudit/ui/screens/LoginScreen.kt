@@ -55,7 +55,7 @@ fun LoginScreen(
                 LoginContent(
                     enabled = true,
                     errorMessage = null,
-                    onLoginClick = { viewModel.initiateLogin() }
+                    onLoginClick = { viewModel.onLoginClick() }
                 )
             }
             
@@ -63,7 +63,7 @@ fun LoginScreen(
                 LoginContent(
                     enabled = true,
                     errorMessage = currentState.message,
-                    onLoginClick = { viewModel.initiateLogin() }
+                    onLoginClick = { viewModel.onLoginClick() }
                 )
             }
 

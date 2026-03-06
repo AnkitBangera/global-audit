@@ -3,6 +3,7 @@ package com.landmarkgroup.globalaudit.utils
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import com.landmarkgroup.globalaudit.data.model.AuthData
 
 /**
  * Settings manager for storing app preferences persistently.
@@ -14,6 +15,17 @@ object AppSettings {
     private const val PREFS_NAME = "GlobalAuditPrefs"
     private const val KEY_DEVICE_ID = "DeviceId"
     private const val TAG = "AppSettings"
+
+    // Auth/session persistence
+    private const val KEY_ACCESS_TOKEN = "AccessToken"
+    private const val KEY_ID_TOKEN = "IdToken"
+    private const val KEY_EXPIRES_ON = "ExpiresOn"
+    private const val KEY_SELECTED_FACILITY = "SelectedFacility"
+    private const val KEY_WAREHOUSE_CODE = "WarehouseCode"
+    private const val KEY_USERNAME = "Username"
+    private const val KEY_PROFILE_PICTURE_URL = "ProfilePictureUrl"
+    private const val KEY_PERMISSIBLE_WAREHOUSES = "PermissibleWarehouses"
+    private const val KEY_PERMISSIBLE_FACILITIES = "PermissibleFacilities"
 
     private fun getSharedPreferences(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -80,5 +92,62 @@ object AppSettings {
         val prefs = getSharedPreferences(context)
         val deviceId = prefs.getString(KEY_DEVICE_ID, null)
         return !deviceId.isNullOrEmpty()
+    }
+
+    fun saveAuthData(context: Context, authData: AuthData) {
+        val prefs = getSharedPreferences(context)
+        prefs.edit()
+            .putString(KEY_ACCESS_TOKEN, authData.accessTokenKey)
+            .putString(KEY_ID_TOKEN, authData.idTokenKey)
+            .putLong(KEY_EXPIRES_ON, authData.expiresOnKey)
+            .putString(KEY_SELECTED_FACILITY, authData.selectedFacilityKey)
+            .putString(KEY_WAREHOUSE_CODE, authData.warehouseCodeKey)
+            .putString(KEY_USERNAME, authData.usernameKey)
+            .putString(KEY_PROFILE_PICTURE_URL, authData.profilePictureUrl)
+            .putStringSet(KEY_PERMISSIBLE_WAREHOUSES, authData.permissableWarehouses.toSet())
+            .putStringSet(KEY_PERMISSIBLE_FACILITIES, authData.permissableFacilities.toSet())
+            .apply()
+
+        Log.d(TAG, "Auth data saved (expiresOn=${authData.expiresOnKey}, selectedFacility=${authData.selectedFacilityKey})")
+    }
+
+    fun loadAuthData(context: Context): AuthData? {
+        val prefs = getSharedPreferences(context)
+        val idToken = prefs.getString(KEY_ID_TOKEN, null)
+        val accessToken = prefs.getString(KEY_ACCESS_TOKEN, null)
+        val expiresOn = prefs.getLong(KEY_EXPIRES_ON, 0L)
+
+        // If we don't have the basics, treat as no cached session.
+        if (idToken.isNullOrBlank() || accessToken.isNullOrBlank() || expiresOn <= 0L) {
+            return null
+        }
+
+        return AuthData(
+            accessTokenKey = accessToken,
+            idTokenKey = idToken,
+            expiresOnKey = expiresOn,
+            selectedFacilityKey = prefs.getString(KEY_SELECTED_FACILITY, null),
+            warehouseCodeKey = prefs.getString(KEY_WAREHOUSE_CODE, null),
+            usernameKey = prefs.getString(KEY_USERNAME, null),
+            profilePictureUrl = prefs.getString(KEY_PROFILE_PICTURE_URL, null),
+            permissableWarehouses = prefs.getStringSet(KEY_PERMISSIBLE_WAREHOUSES, emptySet())?.toList() ?: emptyList(),
+            permissableFacilities = prefs.getStringSet(KEY_PERMISSIBLE_FACILITIES, emptySet())?.toList() ?: emptyList()
+        )
+    }
+
+    fun clearAuthData(context: Context) {
+        val prefs = getSharedPreferences(context)
+        prefs.edit()
+            .remove(KEY_ACCESS_TOKEN)
+            .remove(KEY_ID_TOKEN)
+            .remove(KEY_EXPIRES_ON)
+            .remove(KEY_SELECTED_FACILITY)
+            .remove(KEY_WAREHOUSE_CODE)
+            .remove(KEY_USERNAME)
+            .remove(KEY_PROFILE_PICTURE_URL)
+            .remove(KEY_PERMISSIBLE_WAREHOUSES)
+            .remove(KEY_PERMISSIBLE_FACILITIES)
+            .apply()
+        Log.d(TAG, "Auth data cleared")
     }
 }

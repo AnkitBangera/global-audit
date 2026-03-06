@@ -44,16 +44,18 @@ class LoginViewModel(
     init {
         // Initialize device ID on app startup (similar to Xamarin's ValidateDevice)
         initializeDeviceId()
-        
-        val sharedAuthData = SharedAuthData.getAuthData()
-        if (sharedAuthData != null) {
-            val idToken = sharedAuthData.idTokenKey
-            if (!idToken.isNullOrEmpty() && 
-                sharedAuthData.expiresOnKey > System.currentTimeMillis() &&
-                !sharedAuthData.selectedFacilityKey.isNullOrEmpty()) {
-                _uiState.value = LoginUiState.NavigateToMainApp
-            }
+
+        // Restore cached session (survives swipe-kill) if present
+        val cachedAuth = AppSettings.loadAuthData(appContext)
+        if (cachedAuth != null) {
+            SharedAuthData.setAuthData(cachedAuth)
         }
+
+        // If session is still valid, skip ADFS and go straight into the app
+        if (isSessionValid(SharedAuthData.getAuthData())) {
+            _uiState.value = LoginUiState.NavigateToMainApp
+        }
+
         serviceConfig = AuthorizationServiceConfiguration(
             Uri.parse("https://sts.landmarkgroup.com/adfs/oauth2/authorize"),
             Uri.parse("https://sts.landmarkgroup.com/adfs/oauth2/token")
@@ -93,6 +95,15 @@ class LoginViewModel(
         _uiState.value = LoginUiState.ShowWebView(authRequest.toUri().toString())
     }
 
+    fun onLoginClick() {
+        // If the session is still valid, do NOT trigger ADFS again.
+        if (isSessionValid(SharedAuthData.getAuthData())) {
+            _uiState.value = LoginUiState.NavigateToMainApp
+            return
+        }
+        initiateLogin()
+    }
+
     fun handleAuthCode(authCode: String) {
         Log.d("LoginViewModel", "Received authorization code: $authCode")
         val tokenRequest = TokenRequest.Builder(
@@ -108,7 +119,7 @@ class LoginViewModel(
             if (tokenResponse != null) {
                 val accessToken = tokenResponse.accessToken
                 val idToken = tokenResponse.idToken
-                val expiresIn = tokenResponse.accessTokenExpirationTime ?: 0L
+                val expiresOn = tokenResponse.accessTokenExpirationTime ?: 0L
 
                 Log.d("LoginViewModel", "ADFS Login successful - Access Token: $accessToken")
                 Log.d("LoginViewModel", "ADFS Login successful - ID Token: $idToken")
@@ -123,7 +134,7 @@ class LoginViewModel(
                     sharedAuthData = AuthData(
                         accessTokenKey = accessToken,
                         idTokenKey = idToken,
-                        expiresOnKey = System.currentTimeMillis() + (expiresIn * 1000),
+                        expiresOnKey = expiresOn,
                         selectedFacilityKey = null,
                         usernameKey = JwtUtils.extractForKey(idToken, "given_name") + " " +
                                 JwtUtils.extractForKey(idToken, "family_name"),
@@ -135,12 +146,13 @@ class LoginViewModel(
                 } else {
                     sharedAuthData.accessTokenKey = accessToken
                     sharedAuthData.idTokenKey = idToken
-                    sharedAuthData.expiresOnKey = System.currentTimeMillis() + (expiresIn * 1000)
+                    sharedAuthData.expiresOnKey = expiresOn
                     sharedAuthData.usernameKey = JwtUtils.extractForKey(idToken, "given_name") + " " +
                             JwtUtils.extractForKey(idToken, "family_name")
                     // Keep existing profilePictureUrl if already set
                 }
                 SharedAuthData.setAuthData(sharedAuthData)
+                AppSettings.saveAuthData(appContext, sharedAuthData)
 
                 if (accessToken != null && idToken != null) {
                     authorizeWithBackend()
@@ -187,6 +199,9 @@ class LoginViewModel(
                     sharedAuthData?.permissableFacilities = facilities.mapNotNull { 
                         UserFacility.fromId(it)?.name 
                     }
+                    if (sharedAuthData != null) {
+                        AppSettings.saveAuthData(appContext, sharedAuthData)
+                    }
                 }
                 
                 if (authorizationResponse.id != null && !facilities.isNullOrEmpty()) {
@@ -212,18 +227,31 @@ class LoginViewModel(
             val sharedAuthData = SharedAuthData.getAuthData()
             sharedAuthData?.selectedFacilityKey = facility
             sharedAuthData?.warehouseCodeKey = UserFacility.fromName(facility)?.id ?: ""
+            if (sharedAuthData != null) {
+                AppSettings.saveAuthData(appContext, sharedAuthData)
+            }
             _uiState.value = LoginUiState.NavigateToMainApp
         }
     }
 
     fun logout() {
         SharedAuthData.clearAuthData()
+        AppSettings.clearAuthData(appContext)
         _uiState.value = LoginUiState.Idle
     }
 
     fun handleAuthFlowError(message: String) {
         Log.e("LoginViewModel", "Auth Flow Error: $message")
         SharedAuthData.clearAuthData()
+        AppSettings.clearAuthData(appContext)
         _uiState.value = LoginUiState.Error(message)
+    }
+
+    private fun isSessionValid(authData: AuthData?): Boolean {
+        return authData != null &&
+            !authData.idTokenKey.isNullOrEmpty() &&
+            !authData.accessTokenKey.isNullOrEmpty() &&
+            authData.expiresOnKey > System.currentTimeMillis() &&
+            !authData.selectedFacilityKey.isNullOrEmpty()
     }
 }
