@@ -18,6 +18,7 @@ import com.landmarkgroup.globalaudit.ui.viewmodel.LoginViewModel
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object GlobalStockAudit : Screen("global_stock_audit")
+    object Profile : Screen("profile")
     object ZoneSelection : Screen("zone_selection")
     object LocationEntry : Screen("location_entry")
     object Summary : Screen("summary")
@@ -69,6 +70,23 @@ fun NavGraph(
             GlobalStockAuditScreen(
                 onGlobalStockAuditClick = {
                     navController.navigate(Screen.ZoneSelection.route)
+                },
+                onProfileClick = {
+                    navController.navigate(Screen.Profile.route)
+                }
+            )
+        }
+        
+        composable(Screen.Profile.route) {
+            ProfileScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                onLogout = {
+                    loginViewModel.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }
