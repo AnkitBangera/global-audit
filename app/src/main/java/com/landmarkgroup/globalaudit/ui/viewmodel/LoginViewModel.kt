@@ -10,6 +10,7 @@ import com.landmarkgroup.globalaudit.data.model.AuthData
 import com.landmarkgroup.globalaudit.data.model.AuthorizationResponse
 import com.landmarkgroup.globalaudit.data.model.SharedAuthData
 import com.landmarkgroup.globalaudit.data.model.UserFacility
+import com.landmarkgroup.globalaudit.network.NetworkModule
 import com.landmarkgroup.globalaudit.utils.AppSettings
 import com.landmarkgroup.globalaudit.utils.AuthConstants
 import com.landmarkgroup.globalaudit.utils.DeviceUtils
@@ -34,6 +35,7 @@ class LoginViewModel(
 ) : ViewModel() {
     private val appContext: Context = application.applicationContext
     private val authService: AuthorizationService = AuthorizationService(appContext)
+    private val apiService = NetworkModule.sahlaApiService
 
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val uiState: StateFlow<LoginUiState> = _uiState
@@ -170,27 +172,10 @@ class LoginViewModel(
         _uiState.value = LoginUiState.Authorizing
         viewModelScope.launch {
             try {
-                // TODO: Replace with actual API call
-                // For now, using mock data - you'll need to implement the API service
-                // val authorizationResponse = apiService.authorize()
+                // Call the actual API endpoint to get user facilities
+                val authorizationResponse = apiService.authorize()
                 
-                // TODO: Replace with actual API call
-                // val authorizationResponse = apiService.authorize()
-                
-                // Mock response for now - replace with actual API call
-                // Backend returns numeric facility IDs (e.g., "1006000" for MU)
-                val mockLocations = listOf("1006000", "1001000", "1003000") // MU, BU, SU facility IDs
-                val authorizationResponse = AuthorizationResponse(
-                    id = "12345",
-                    name = "Test User",
-                    authorizations = com.landmarkgroup.globalaudit.data.model.Authorizations(
-                        id = "12345",
-                        firstName = "Test",
-                        lastName = "User",
-                        locations = mockLocations,
-                        roles = listOf("User")
-                    )
-                )
+                Log.d("LoginViewModel", "Authorization response received: ${authorizationResponse.id}")
                 
                 val sharedAuthData = SharedAuthData.getAuthData()
                 val facilities = authorizationResponse.authorizations?.locations
@@ -217,7 +202,25 @@ class LoginViewModel(
                     handleAuthFlowError("User not authorized by backend system.")
                 }
             } catch (e: Exception) {
-                handleAuthFlowError("Could not verify user with backend: ${e.message}")
+                Log.e("LoginViewModel", "Error calling authorize API", e)
+                val errorMessage = when {
+                    e.message?.contains("401") == true -> {
+                        "Authentication failed. Please try logging in again."
+                    }
+                    e.message?.contains("403") == true -> {
+                        "Access denied. Please contact your administrator."
+                    }
+                    e.message?.contains("404") == true -> {
+                        "API endpoint not found. Please contact support."
+                    }
+                    e.message?.contains("500") == true -> {
+                        "Server error. Please try again later."
+                    }
+                    else -> {
+                        "Could not verify user with backend: ${e.message}"
+                    }
+                }
+                handleAuthFlowError(errorMessage)
             }
         }
     }

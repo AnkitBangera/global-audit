@@ -18,4 +18,8 @@ object AuthConstants {
     val SCOPES = listOf("openid", "profile", "email")
     const val AUTH_STATE_PREFS_KEY = "authStateJson"
     const val AUTH_PREFS_NAME = "authPrefs"
+
+    // IBM API Gateway client id for apidev/retail-sit (same as efulfill-android SIT)
+    const val API_CLIENT_ID_HEADER = "x-ibm-client-id"
+    const val API_CLIENT_ID_VALUE = "612f0b51-8594-4a44-93f0-265113649943"
 }
