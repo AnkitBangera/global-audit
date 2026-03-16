@@ -24,8 +24,10 @@ import com.landmarkgroup.globalaudit.ui.utils.safeAreaPadding
 
 @Composable
 fun ZoneSelectionScreen(
+    isLoading: Boolean,
+    errorMessage: String?,
     onBackClick: () -> Unit,
-    onZoneSelected: (String) -> Unit
+    onContinue: (String) -> Unit
 ) {
     var zoneId by remember { mutableStateOf("") }
     
@@ -116,7 +118,7 @@ fun ZoneSelectionScreen(
                         keyboardActions = KeyboardActions(
                             onDone = {
                                 if (zoneId.isNotBlank()) {
-                                    onZoneSelected(zoneId.trim())
+                                    onContinue(zoneId.trim())
                                 }
                             }
                         ),
@@ -139,10 +141,17 @@ fun ZoneSelectionScreen(
                 }
                 
                 // Continue Button
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage ?: "",
+                        color = Color(0xFFD32F2F),
+                        fontSize = 14.sp
+                    )
+                }
                 Button(
                     onClick = {
                         if (zoneId.isNotBlank()) {
-                            onZoneSelected(zoneId.trim())
+                            onContinue(zoneId.trim())
                         }
                     },
                     modifier = Modifier
@@ -152,23 +161,27 @@ fun ZoneSelectionScreen(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF6C5CE7)
                     ),
-                    enabled = zoneId.isNotBlank()
+                    enabled = zoneId.isNotBlank() && !isLoading
                 ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Continue",
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = "→",
-                            color = Color.White,
-                            fontSize = 20.sp
-                        )
+                    if (isLoading) {
+                        CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp)
+                    } else {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Continue",
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = "→",
+                                color = Color.White,
+                                fontSize = 20.sp
+                            )
+                        }
                     }
                 }
             }

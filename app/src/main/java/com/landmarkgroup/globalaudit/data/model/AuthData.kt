@@ -7,6 +7,7 @@ data class AuthData(
     var selectedFacilityKey: String? = null,
     var warehouseCodeKey: String? = null,
     var usernameKey: String? = null,
+    var employeeIdKey: String? = null,
     var profilePictureUrl: String? = null,
     var permissableWarehouses: List<String> = emptyList(),
     var permissableFacilities: List<String> = emptyList()

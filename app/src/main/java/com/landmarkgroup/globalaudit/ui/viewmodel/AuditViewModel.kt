@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.landmarkgroup.globalaudit.network.NetworkModule
+import com.landmarkgroup.globalaudit.data.model.ScanZoneRequest
 
 class AuditViewModel : ViewModel() {
     private val _auditData = MutableStateFlow<AuditData?>(null)
@@ -21,6 +23,12 @@ class AuditViewModel : ViewModel() {
     
     private val _currentQuantity = MutableStateFlow<String>("")
     val currentQuantity: StateFlow<String> = _currentQuantity.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _scanZoneError = MutableStateFlow<String?>(null)
+    val scanZoneError: StateFlow<String?> = _scanZoneError.asStateFlow()
     
     fun setZoneId(zoneId: String) {
         _currentZoneId.value = zoneId
@@ -33,6 +41,24 @@ class AuditViewModel : ViewModel() {
     
     fun setQuantity(quantity: String) {
         _currentQuantity.value = quantity
+    }
+
+    suspend fun scanZone(zoneId: String): Boolean {
+        _isLoading.value = true
+        _scanZoneError.value = null
+        return try {
+            val response = NetworkModule.auditApiService.scanZone(ScanZoneRequest(zone = zoneId))
+            val ok = response.isSuccessful
+            if (!ok) {
+                _scanZoneError.value = "Scan zone failed: ${response.code()}"
+            }
+            ok
+        } catch (e: Exception) {
+            _scanZoneError.value = e.message ?: "Unknown error"
+            false
+        } finally {
+            _isLoading.value = false
+        }
     }
     
     fun addBin() {

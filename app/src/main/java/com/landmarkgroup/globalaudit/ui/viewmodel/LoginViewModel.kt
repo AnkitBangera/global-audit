@@ -131,6 +131,10 @@ class LoginViewModel(
                 // TODO: Implement profile image URL if needed
                 // val profileImageUrl = Constants.getUserImageUrl(userId)
                 
+                val empIdFromJwt = JwtUtils.extractForKey(idToken, "SamAccountName")
+                val displayName = (JwtUtils.extractForKey(idToken, "given_name") ?: "").trim() + " " +
+                        (JwtUtils.extractForKey(idToken, "family_name") ?: "").trim()
+
                 var sharedAuthData = SharedAuthData.getAuthData()
                 if (sharedAuthData == null) {
                     sharedAuthData = AuthData(
@@ -138,8 +142,8 @@ class LoginViewModel(
                         idTokenKey = idToken,
                         expiresOnKey = expiresOn,
                         selectedFacilityKey = null,
-                        usernameKey = JwtUtils.extractForKey(idToken, "given_name") + " " +
-                                JwtUtils.extractForKey(idToken, "family_name"),
+                        usernameKey = displayName.trim(),
+                        employeeIdKey = empIdFromJwt,
                         warehouseCodeKey = "",
                         profilePictureUrl = null, // Can be set if profile image URL is needed
                         permissableWarehouses = emptyList(),
@@ -149,8 +153,11 @@ class LoginViewModel(
                     sharedAuthData.accessTokenKey = accessToken
                     sharedAuthData.idTokenKey = idToken
                     sharedAuthData.expiresOnKey = expiresOn
-                    sharedAuthData.usernameKey = JwtUtils.extractForKey(idToken, "given_name") + " " +
-                            JwtUtils.extractForKey(idToken, "family_name")
+                    sharedAuthData.usernameKey = displayName.trim()
+                    // Prefer SamAccountName if available
+                    if (!empIdFromJwt.isNullOrEmpty()) {
+                        sharedAuthData.employeeIdKey = empIdFromJwt
+                    }
                     // Keep existing profilePictureUrl if already set
                 }
                 SharedAuthData.setAuthData(sharedAuthData)
@@ -179,6 +186,10 @@ class LoginViewModel(
                 
                 val sharedAuthData = SharedAuthData.getAuthData()
                 val facilities = authorizationResponse.authorizations?.locations
+                // Persist employeeId from backend authorizations response if present
+                if (authorizationResponse.id != null) {
+                    sharedAuthData?.employeeIdKey = authorizationResponse.id
+                }
                 if (facilities != null) {
                     sharedAuthData?.permissableWarehouses = facilities
                     sharedAuthData?.permissableFacilities = facilities.mapNotNull { 

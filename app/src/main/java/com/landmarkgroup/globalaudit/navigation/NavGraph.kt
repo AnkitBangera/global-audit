@@ -7,6 +7,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -92,13 +94,24 @@ fun NavGraph(
         }
         
         composable(Screen.ZoneSelection.route) {
+            val isLoading by auditViewModel.isLoading.collectAsState()
+            val errorMessage by auditViewModel.scanZoneError.collectAsState()
+            val scope = rememberCoroutineScope()
+
             ZoneSelectionScreen(
+                isLoading = isLoading,
+                errorMessage = errorMessage,
                 onBackClick = {
                     navController.popBackStack()
                 },
-                onZoneSelected = { zoneId ->
-                    auditViewModel.setZoneId(zoneId)
-                    navController.navigate(Screen.LocationEntry.route)
+                onContinue = { zoneId ->
+                    scope.launch {
+                        val ok = auditViewModel.scanZone(zoneId)
+                        if (ok) {
+                            auditViewModel.setZoneId(zoneId)
+                            navController.navigate(Screen.LocationEntry.route)
+                        }
+                    }
                 }
             )
         }

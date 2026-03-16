@@ -7,6 +7,8 @@ import android.content.Context
  * Similar to Xamarin's Constants class.
  */
 object Constants {
+    const val IBM_URL = "https://apidev.landmarkgroup.com"
+    const val NGINX_URL = "https://devapi1.landmarkgroup.com/warehouse-ops/"
     
     /**
      * Gets the device ID for the current device.
