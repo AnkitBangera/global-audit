@@ -14,6 +14,6 @@ import retrofit2.http.POST
 interface AuditApiService {
 
     // POST /warehouse-ops/apps/digitalwms/warehouses/audit/scan-zone
-    @POST("apps/digitalwms/warehouses/audit/scan-zone")
+    @POST("apps/digitalwms/warehouse/audit/scan-zone")
     suspend fun scanZone(@Body request: ScanZoneRequest): Response<Unit>
 }
