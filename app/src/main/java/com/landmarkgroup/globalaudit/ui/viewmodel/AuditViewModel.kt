@@ -10,6 +10,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.landmarkgroup.globalaudit.network.NetworkModule
 import com.landmarkgroup.globalaudit.data.model.ScanZoneRequest
+import com.landmarkgroup.globalaudit.data.model.ScanLocationRequest
+import com.landmarkgroup.globalaudit.data.model.SharedAuthData
+import com.landmarkgroup.globalaudit.utils.DeviceUtils
+import android.content.Context
 
 class AuditViewModel : ViewModel() {
     private val _auditData = MutableStateFlow<AuditData?>(null)
@@ -29,6 +33,10 @@ class AuditViewModel : ViewModel() {
 
     private val _scanZoneError = MutableStateFlow<String?>(null)
     val scanZoneError: StateFlow<String?> = _scanZoneError.asStateFlow()
+
+    // Toast-like event for scan-zone result (success/failure + message)
+    private val _scanZoneToast = MutableStateFlow<Pair<Boolean, String>?>(null)
+    val scanZoneToast: StateFlow<Pair<Boolean, String>?> = _scanZoneToast.asStateFlow()
     
     fun setZoneId(zoneId: String) {
         _currentZoneId.value = zoneId
@@ -48,19 +56,71 @@ class AuditViewModel : ViewModel() {
         _scanZoneError.value = null
         return try {
             val response = NetworkModule.auditApiService.scanZone(ScanZoneRequest(zone = zoneId))
-            val ok = response.isSuccessful
-            if (!ok) {
-                _scanZoneError.value = "Scan zone failed: ${response.code()}"
+            if (response.isSuccessful) {
+                val body = response.body()
+                val success = body?.returnCode.equals("Y", true)
+                val message = body?.errorMessage ?: ""
+                val finalMessage = if (message.isNotBlank()) message else if (success) "Zone accepted" else "Invalid Zone ID"
+                _scanZoneToast.value = Pair(success, finalMessage)
+                if (!success) {
+                    _scanZoneError.value = finalMessage
+                }
+                success
+            } else {
+                val msg = "Scan zone failed: ${response.code()}"
+                _scanZoneError.value = msg
+                _scanZoneToast.value = Pair(false, msg)
+                false
             }
-            ok
         } catch (e: Exception) {
-            _scanZoneError.value = e.message ?: "Unknown error"
+            val msg = e.message ?: "Unknown error"
+            _scanZoneError.value = msg
+            _scanZoneToast.value = Pair(false, msg)
             false
         } finally {
             _isLoading.value = false
         }
     }
     
+    suspend fun scanLocation(context: Context): Boolean {
+        _isLoading.value = true
+        _scanZoneError.value = null
+        return try {
+            val auth = SharedAuthData.getAuthData()
+            val userId = auth?.employeeIdKey ?: auth?.usernameKey ?: ""
+            val request = ScanLocationRequest(
+                zone = _currentZoneId.value,
+                location = _currentLocationId.value,
+                userId = userId,
+                deviceId = DeviceUtils.getDeviceId(context)
+            )
+            val response = NetworkModule.auditApiService.scanLocation(request)
+            if (response.isSuccessful) {
+                val body = response.body()
+                val success = body?.returnCode.equals("Y", true)
+                val message = body?.errorMessage ?: ""
+                val finalMessage = if (message.isNotBlank()) message else if (success) "Location accepted" else "Invalid Location ID"
+                _scanZoneToast.value = Pair(success, finalMessage)
+                if (!success) {
+                    _scanZoneError.value = finalMessage
+                }
+                success
+            } else {
+                val msg = "Scan location failed: ${response.code()}"
+                _scanZoneError.value = msg
+                _scanZoneToast.value = Pair(false, msg)
+                false
+            }
+        } catch (e: Exception) {
+            val msg = e.message ?: "Unknown error"
+            _scanZoneError.value = msg
+            _scanZoneToast.value = Pair(false, msg)
+            false
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
     fun addBin() {
         val locationId = _currentLocationId.value.trim()
         val quantity = _currentQuantity.value.trim().toIntOrNull() ?: 0
@@ -85,6 +145,10 @@ class AuditViewModel : ViewModel() {
         _currentQuantity.value = ""
     }
     
+    fun clearScanZoneToast() {
+        _scanZoneToast.value = null
+    }
+
     fun submitAudit() {
         viewModelScope.launch {
             // Here you would typically save to database or send to API

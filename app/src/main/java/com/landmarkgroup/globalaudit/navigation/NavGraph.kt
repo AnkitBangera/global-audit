@@ -97,6 +97,29 @@ fun NavGraph(
             val isLoading by auditViewModel.isLoading.collectAsState()
             val errorMessage by auditViewModel.scanZoneError.collectAsState()
             val scope = rememberCoroutineScope()
+            val toastEvent by auditViewModel.scanZoneToast.collectAsState()
+            val context = androidx.compose.ui.platform.LocalContext.current
+
+            LaunchedEffect(toastEvent) {
+                toastEvent?.let { pair ->
+                    val success = pair.first
+                    val msg = pair.second
+                    val toast = android.widget.Toast.makeText(
+                        context,
+                        msg,
+                        android.widget.Toast.LENGTH_SHORT
+                    )
+                    // Color the toast background: green for success, red for failure
+                    val bgHex = if (success) "#388E3C" else "#D32F2F"
+                    toast.view?.background =
+                        android.graphics.drawable.ColorDrawable(android.graphics.Color.parseColor(bgHex))
+                    val tv = toast.view?.findViewById<android.widget.TextView>(android.R.id.message)
+                    tv?.setTextColor(android.graphics.Color.WHITE)
+                    toast.setGravity(android.view.Gravity.BOTTOM, 0, 120)
+                    toast.show()
+                    auditViewModel.clearScanZoneToast()
+                }
+            }
 
             ZoneSelectionScreen(
                 isLoading = isLoading,
@@ -122,6 +145,8 @@ fun NavGraph(
             val locationId by auditViewModel.currentLocationId.collectAsState()
             val quantity by auditViewModel.currentQuantity.collectAsState()
             val binCount = auditData?.bins?.size ?: 0
+            val scope = rememberCoroutineScope()
+            val context = androidx.compose.ui.platform.LocalContext.current
             
             var showCancelDialog by remember { mutableStateOf(false) }
             
@@ -132,8 +157,18 @@ fun NavGraph(
                 binCount = binCount,
                 onLocationIdChange = { auditViewModel.setLocationId(it) },
                 onQuantityChange = { auditViewModel.setQuantity(it) },
+                onScanLocation = {
+                    scope.launch {
+                        auditViewModel.scanLocation(context)
+                    }
+                },
                 onAddBin = {
-                    auditViewModel.addBin()
+                    scope.launch {
+                        val ok = auditViewModel.scanLocation(context)
+                        if (ok) {
+                            auditViewModel.addBin()
+                        }
+                    }
                 },
                 onCancel = {
                     showCancelDialog = true

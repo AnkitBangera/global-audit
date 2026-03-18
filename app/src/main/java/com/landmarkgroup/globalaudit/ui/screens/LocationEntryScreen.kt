@@ -25,6 +25,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import com.landmarkgroup.globalaudit.ui.utils.safeAreaPadding
 
 @Composable
@@ -35,6 +38,7 @@ fun LocationEntryScreen(
     binCount: Int,
     onLocationIdChange: (String) -> Unit,
     onQuantityChange: (String) -> Unit,
+    onScanLocation: () -> Unit,
     onAddBin: () -> Unit,
     onCancel: () -> Unit,
     onSummary: () -> Unit,
@@ -111,7 +115,18 @@ fun LocationEntryScreen(
                         OutlinedTextField(
                             value = locationId,
                             onValueChange = { onLocationIdChange(it) },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .onPreviewKeyEvent { event ->
+                                    if (event.type == KeyEventType.KeyDown && event.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_ENTER) {
+                                        if (locationId.isNotBlank()) {
+                                            onScanLocation()
+                                        }
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                },
                             placeholder = { Text("e.g. LOCN3", color = Color(0xFF999999)) },
                             shape = RoundedCornerShape(8.dp),
                             colors = OutlinedTextFieldDefaults.colors(
@@ -120,7 +135,14 @@ fun LocationEntryScreen(
                             ),
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Text,
-                                imeAction = ImeAction.Next
+                                imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    if (locationId.isNotBlank()) {
+                                        onScanLocation()
+                                    }
+                                }
                             ),
                             singleLine = true,
                             trailingIcon = {
