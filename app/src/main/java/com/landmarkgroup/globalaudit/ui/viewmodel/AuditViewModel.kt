@@ -37,6 +37,12 @@ class AuditViewModel : ViewModel() {
     // Toast-like event for scan-zone result (success/failure + message)
     private val _scanZoneToast = MutableStateFlow<Pair<Boolean, String>?>(null)
     val scanZoneToast: StateFlow<Pair<Boolean, String>?> = _scanZoneToast.asStateFlow()
+
+    private val _isLocationValidated = MutableStateFlow(false)
+    val isLocationValidated: StateFlow<Boolean> = _isLocationValidated.asStateFlow()
+
+    private val _scanLocationToast = MutableStateFlow<String?>(null)
+    val scanLocationToast: StateFlow<String?> = _scanLocationToast.asStateFlow()
     
     fun setZoneId(zoneId: String) {
         _currentZoneId.value = zoneId
@@ -45,6 +51,9 @@ class AuditViewModel : ViewModel() {
     
     fun setLocationId(locationId: String) {
         _currentLocationId.value = locationId
+        // Any edit invalidates the previous scan result.
+        _isLocationValidated.value = false
+        _currentQuantity.value = ""
     }
     
     fun setQuantity(quantity: String) {
@@ -100,21 +109,25 @@ class AuditViewModel : ViewModel() {
                 val success = body?.returnCode.equals("Y", true)
                 val message = body?.errorMessage ?: ""
                 val finalMessage = if (message.isNotBlank()) message else if (success) "Location accepted" else "Invalid Location ID"
-                _scanZoneToast.value = Pair(success, finalMessage)
-                if (!success) {
-                    _scanZoneError.value = finalMessage
+                if (success) {
+                    _isLocationValidated.value = true
+                } else {
+                    _isLocationValidated.value = false
+                    _scanLocationToast.value = finalMessage
                 }
                 success
             } else {
                 val msg = "Scan location failed: ${response.code()}"
                 _scanZoneError.value = msg
-                _scanZoneToast.value = Pair(false, msg)
+                _isLocationValidated.value = false
+                _scanLocationToast.value = msg
                 false
             }
         } catch (e: Exception) {
             val msg = e.message ?: "Unknown error"
             _scanZoneError.value = msg
-            _scanZoneToast.value = Pair(false, msg)
+            _isLocationValidated.value = false
+            _scanLocationToast.value = msg
             false
         } finally {
             _isLoading.value = false
@@ -135,6 +148,7 @@ class AuditViewModel : ViewModel() {
             // Clear current inputs
             _currentLocationId.value = ""
             _currentQuantity.value = ""
+            _isLocationValidated.value = false
         }
     }
     
@@ -147,6 +161,10 @@ class AuditViewModel : ViewModel() {
     
     fun clearScanZoneToast() {
         _scanZoneToast.value = null
+    }
+
+    fun clearScanLocationToast() {
+        _scanLocationToast.value = null
     }
 
     fun submitAudit() {

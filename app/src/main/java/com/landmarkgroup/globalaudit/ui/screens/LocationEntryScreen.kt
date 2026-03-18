@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +27,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import com.landmarkgroup.globalaudit.ui.utils.safeAreaPadding
 
 @Composable
@@ -36,6 +40,7 @@ fun LocationEntryScreen(
     locationId: String,
     quantity: String,
     binCount: Int,
+    isLocationValidated: Boolean,
     onLocationIdChange: (String) -> Unit,
     onQuantityChange: (String) -> Unit,
     onScanLocation: () -> Unit,
@@ -46,11 +51,8 @@ fun LocationEntryScreen(
     onDismissCancelDialog: () -> Unit,
     onConfirmCancel: () -> Unit
 ) {
-    var isLocationValid by remember { mutableStateOf(locationId.isNotBlank()) }
-    
-    LaunchedEffect(locationId) {
-        isLocationValid = locationId.isNotBlank()
-    }
+    // Location is only "valid" once scan-location returns returnCode=Y.
+    val isLocationValid = isLocationValidated
     
     // Cancel Confirmation Dialog
     if (showCancelDialog) {
@@ -78,7 +80,7 @@ fun LocationEntryScreen(
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "Scan/enter location and quantity",
+            text = "Scan/enter location",
             fontSize = 14.sp,
             color = Color(0xFF666666)
         )
@@ -157,17 +159,6 @@ fun LocationEntryScreen(
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
-                                    Icon(
-                                        imageVector = Icons.Default.Camera,
-                                        contentDescription = "Scan",
-                                        modifier = Modifier
-                                            .size(20.dp)
-                                            .clickable {
-                                                // TODO: Implement barcode scanner
-                                                onLocationIdChange("LOCN3")
-                                            },
-                                        tint = Color(0xFF666666)
-                                    )
                                     if (locationId.isNotBlank()) {
                                         Icon(
                                             imageVector = Icons.Default.Close,
@@ -184,111 +175,121 @@ fun LocationEntryScreen(
                     }
                 }
                 
-                // Quantity Field
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                AnimatedVisibility(
+                    visible = isLocationValidated,
+                    enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
+                    exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
                 ) {
-                    Text(
-                        text = "QUANTITY",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF666666),
-                        letterSpacing = 0.5.sp
-                    )
-                    
-                    OutlinedTextField(
-                        value = quantity,
-                        onValueChange = { newValue ->
-                            if (newValue.isEmpty() || newValue.all { it.isDigit() }) {
-                                onQuantityChange(newValue)
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Enter quantity", color = Color(0xFF999999)) },
-                        shape = RoundedCornerShape(8.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF4A90E2),
-                            unfocusedBorderColor = Color(0xFFE0E0E0)
-                        ),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Done
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                if (locationId.isNotBlank() && quantity.isNotBlank()) {
-                                    onAddBin()
-                                }
-                            }
-                        ),
-                        singleLine = true,
-                        trailingIcon = {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                IconButton(
-                                    onClick = {
-                                        val currentQty = quantity.toIntOrNull() ?: 0
-                                        if (currentQty > 0) {
-                                            onQuantityChange((currentQty - 1).toString())
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        // Quantity Field
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "QUANTITY",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF666666),
+                                letterSpacing = 0.5.sp
+                            )
+
+                            OutlinedTextField(
+                                value = quantity,
+                                onValueChange = { newValue ->
+                                    if (newValue.isEmpty() || newValue.all { it.isDigit() }) {
+                                        onQuantityChange(newValue)
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                placeholder = { Text("Enter quantity", color = Color(0xFF999999)) },
+                                shape = RoundedCornerShape(8.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF4A90E2),
+                                    unfocusedBorderColor = Color(0xFFE0E0E0)
+                                ),
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Number,
+                                    imeAction = ImeAction.Done
+                                ),
+                                keyboardActions = KeyboardActions(
+                                    onDone = {
+                                        if (locationId.isNotBlank() && quantity.isNotBlank()) {
+                                            onAddBin()
                                         }
-                                    },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.KeyboardArrowDown,
-                                        contentDescription = "Decrease",
-                                        tint = Color(0xFF666666),
-                                        modifier = Modifier.size(16.dp)
-                                    )
+                                    }
+                                ),
+                                singleLine = true,
+                                trailingIcon = {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        IconButton(
+                                            onClick = {
+                                                val currentQty = quantity.toIntOrNull() ?: 0
+                                                if (currentQty > 0) {
+                                                    onQuantityChange((currentQty - 1).toString())
+                                                }
+                                            },
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.KeyboardArrowDown,
+                                                contentDescription = "Decrease",
+                                                tint = Color(0xFF666666),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                        IconButton(
+                                            onClick = {
+                                                val currentQty = quantity.toIntOrNull() ?: 0
+                                                onQuantityChange((currentQty + 1).toString())
+                                            },
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.KeyboardArrowUp,
+                                                contentDescription = "Increase",
+                                                tint = Color(0xFF666666),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
                                 }
-                                IconButton(
-                                    onClick = {
-                                        val currentQty = quantity.toIntOrNull() ?: 0
-                                        onQuantityChange((currentQty + 1).toString())
-                                    },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.KeyboardArrowUp,
-                                        contentDescription = "Increase",
-                                        tint = Color(0xFF666666),
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
+                            )
+                        }
+
+                        // Add Bin Button
+                        Button(
+                            onClick = onAddBin,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF4A90E2)
+                            ),
+                            enabled = locationId.isNotBlank() && quantity.isNotBlank() && (quantity.toIntOrNull() ?: 0) > 0
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = "Add Bin ($binCount)",
+                                    color = Color.White,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
                             }
                         }
-                    )
-                }
-                
-                // Add Bin Button
-                Button(
-                    onClick = onAddBin,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4A90E2)
-                    ),
-                    enabled = locationId.isNotBlank() && quantity.isNotBlank() && quantity.toIntOrNull() ?: 0 > 0
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            text = "Add Bin ($binCount)",
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
                     }
                 }
             }

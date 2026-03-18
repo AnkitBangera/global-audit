@@ -145,16 +145,32 @@ fun NavGraph(
             val locationId by auditViewModel.currentLocationId.collectAsState()
             val quantity by auditViewModel.currentQuantity.collectAsState()
             val binCount = auditData?.bins?.size ?: 0
+            val isLocationValidated by auditViewModel.isLocationValidated.collectAsState()
+            val locationToast by auditViewModel.scanLocationToast.collectAsState()
             val scope = rememberCoroutineScope()
             val context = androidx.compose.ui.platform.LocalContext.current
             
             var showCancelDialog by remember { mutableStateOf(false) }
+
+            LaunchedEffect(locationToast) {
+                if (!locationToast.isNullOrBlank()) {
+                    val toast = android.widget.Toast.makeText(
+                        context,
+                        locationToast,
+                        android.widget.Toast.LENGTH_SHORT
+                    )
+                    toast.setGravity(android.view.Gravity.BOTTOM, 0, 120)
+                    toast.show()
+                    auditViewModel.clearScanLocationToast()
+                }
+            }
             
             LocationEntryScreen(
                 zoneId = zoneId,
                 locationId = locationId,
                 quantity = quantity,
                 binCount = binCount,
+                isLocationValidated = isLocationValidated,
                 onLocationIdChange = { auditViewModel.setLocationId(it) },
                 onQuantityChange = { auditViewModel.setQuantity(it) },
                 onScanLocation = {
@@ -163,12 +179,7 @@ fun NavGraph(
                     }
                 },
                 onAddBin = {
-                    scope.launch {
-                        val ok = auditViewModel.scanLocation(context)
-                        if (ok) {
-                            auditViewModel.addBin()
-                        }
-                    }
+                    auditViewModel.addBin()
                 },
                 onCancel = {
                     showCancelDialog = true

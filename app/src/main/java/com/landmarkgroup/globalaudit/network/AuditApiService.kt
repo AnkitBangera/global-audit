@@ -1,8 +1,8 @@
 package com.landmarkgroup.globalaudit.network
 
-import com.landmarkgroup.globalaudit.data.model.ScanZoneRequest
-import com.landmarkgroup.globalaudit.data.model.ScanZoneResponse
+import com.landmarkgroup.globalaudit.data.model.ApiStatusResponse
 import com.landmarkgroup.globalaudit.data.model.ScanLocationRequest
+import com.landmarkgroup.globalaudit.data.model.ScanZoneRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
@@ -17,9 +17,9 @@ interface AuditApiService {
 
     // POST /warehouse-ops/apps/digitalwms/warehouses/audit/scan-zone
     @POST("apps/digitalwms/warehouse/audit/scan-zone")
-    suspend fun scanZone(@Body request: ScanZoneRequest): Response<ScanZoneResponse>
+    suspend fun scanZone(@Body request: ScanZoneRequest): Response<ApiStatusResponse>
 
     // POST /warehouse-ops/apps/digitalwms/warehouse/audit/scan-location
     @POST("apps/digitalwms/warehouse/audit/scan-location")
-    suspend fun scanLocation(@Body request: ScanLocationRequest): Response<ScanZoneResponse>
+    suspend fun scanLocation(@Body request: ScanLocationRequest): Response<ApiStatusResponse>
 }
