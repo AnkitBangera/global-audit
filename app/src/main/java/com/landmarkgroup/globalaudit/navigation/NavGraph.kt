@@ -147,6 +147,7 @@ fun NavGraph(
             val binCount = auditData?.bins?.size ?: 0
             val isLocationValidated by auditViewModel.isLocationValidated.collectAsState()
             val locationToast by auditViewModel.scanLocationToast.collectAsState()
+            val addStagingToast by auditViewModel.addStagingToast.collectAsState()
             val scope = rememberCoroutineScope()
             val context = androidx.compose.ui.platform.LocalContext.current
             
@@ -164,6 +165,26 @@ fun NavGraph(
                     auditViewModel.clearScanLocationToast()
                 }
             }
+
+            LaunchedEffect(addStagingToast) {
+                addStagingToast?.let { pair ->
+                    val success = pair.first
+                    val msg = pair.second
+                    val toast = android.widget.Toast.makeText(
+                        context,
+                        msg,
+                        android.widget.Toast.LENGTH_SHORT
+                    )
+                    val bgHex = if (success) "#388E3C" else "#D32F2F"
+                    toast.view?.background =
+                        android.graphics.drawable.ColorDrawable(android.graphics.Color.parseColor(bgHex))
+                    val tv = toast.view?.findViewById<android.widget.TextView>(android.R.id.message)
+                    tv?.setTextColor(android.graphics.Color.WHITE)
+                    toast.setGravity(android.view.Gravity.BOTTOM, 0, 120)
+                    toast.show()
+                    auditViewModel.clearAddStagingToast()
+                }
+            }
             
             LocationEntryScreen(
                 zoneId = zoneId,
@@ -179,7 +200,12 @@ fun NavGraph(
                     }
                 },
                 onAddBin = {
-                    auditViewModel.addBin()
+                    scope.launch {
+                        val ok = auditViewModel.addStaging(context)
+                        if (ok) {
+                            auditViewModel.addBin()
+                        }
+                    }
                 },
                 onCancel = {
                     showCancelDialog = true

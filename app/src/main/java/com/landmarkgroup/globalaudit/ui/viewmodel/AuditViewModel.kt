@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import com.landmarkgroup.globalaudit.network.NetworkModule
 import com.landmarkgroup.globalaudit.data.model.ScanZoneRequest
 import com.landmarkgroup.globalaudit.data.model.ScanLocationRequest
+import com.landmarkgroup.globalaudit.data.model.AddStagingRequest
 import com.landmarkgroup.globalaudit.data.model.SharedAuthData
 import com.landmarkgroup.globalaudit.utils.DeviceUtils
 import android.content.Context
@@ -43,6 +44,10 @@ class AuditViewModel : ViewModel() {
 
     private val _scanLocationToast = MutableStateFlow<String?>(null)
     val scanLocationToast: StateFlow<String?> = _scanLocationToast.asStateFlow()
+
+    // Toast for add-staging result (success/failure + message)
+    private val _addStagingToast = MutableStateFlow<Pair<Boolean, String>?>(null)
+    val addStagingToast: StateFlow<Pair<Boolean, String>?> = _addStagingToast.asStateFlow()
     
     fun setZoneId(zoneId: String) {
         _currentZoneId.value = zoneId
@@ -133,7 +138,48 @@ class AuditViewModel : ViewModel() {
             _isLoading.value = false
         }
     }
-
+    
+    suspend fun addStaging(context: Context): Boolean {
+        _isLoading.value = true
+        _scanZoneError.value = null
+        return try {
+            val auth = SharedAuthData.getAuthData()
+            val userId = auth?.employeeIdKey ?: auth?.usernameKey ?: ""
+            val qty = _currentQuantity.value.trim().toIntOrNull() ?: 0
+            val request = AddStagingRequest(
+                zone = _currentZoneId.value,
+                location = _currentLocationId.value,
+                userId = userId,
+                unitQty = qty,
+                deviceId = DeviceUtils.getDeviceId(context)
+            )
+            val response = NetworkModule.auditApiService.addStaging(request)
+            if (response.isSuccessful) {
+                val body = response.body()
+                val success = body?.returnCode.equals("Y", true)
+                val message = body?.errorMessage ?: ""
+                val finalMessage = if (message.isNotBlank()) message else if (success) "Added to staging" else "Add staging failed"
+                _addStagingToast.value = Pair(success, finalMessage)
+                if (!success) {
+                    _scanZoneError.value = finalMessage
+                }
+                success
+            } else {
+                val msg = "Add staging failed: ${response.code()}"
+                _scanZoneError.value = msg
+                _addStagingToast.value = Pair(false, msg)
+                false
+            }
+        } catch (e: Exception) {
+            val msg = e.message ?: "Unknown error"
+            _scanZoneError.value = msg
+            _addStagingToast.value = Pair(false, msg)
+            false
+        } finally {
+            _isLoading.value = false
+        }
+    }
+    
     fun addBin() {
         val locationId = _currentLocationId.value.trim()
         val quantity = _currentQuantity.value.trim().toIntOrNull() ?: 0
@@ -165,6 +211,10 @@ class AuditViewModel : ViewModel() {
 
     fun clearScanLocationToast() {
         _scanLocationToast.value = null
+    }
+
+    fun clearAddStagingToast() {
+        _addStagingToast.value = null
     }
 
     fun submitAudit() {

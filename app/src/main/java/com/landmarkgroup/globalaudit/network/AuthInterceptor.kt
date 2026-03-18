@@ -39,7 +39,7 @@ class AuthInterceptor : Interceptor {
         // Build and print a curl command for scan-zone API for backend verification
         try {
             val urlStr = requestWithHeaders.url.toString()
-            if (urlStr.contains("/audit/scan-zone") || urlStr.contains("/audit/scan-location")) {
+            if (urlStr.contains("/audit/scan-zone") || urlStr.contains("/audit/scan-location") || urlStr.contains("/audit/add-staging")) {
                 val sb = StringBuilder()
                 sb.append("curl --location \\").append("\n")
                     .append("  '").append(urlStr).append("' \\").append("\n")
@@ -72,7 +72,7 @@ class AuthInterceptor : Interceptor {
                     }
                 }
 
-                Log.d("Curl", "ScanZone curl:\n${sb}")
+                Log.d("Curl", "Audit curl:\n${sb}")
             }
         } catch (e: Exception) {
             Log.e("Curl", "Failed to build curl for request", e)
