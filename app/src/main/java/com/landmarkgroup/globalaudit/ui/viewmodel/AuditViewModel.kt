@@ -12,6 +12,7 @@ import com.landmarkgroup.globalaudit.network.NetworkModule
 import com.landmarkgroup.globalaudit.data.model.ScanZoneRequest
 import com.landmarkgroup.globalaudit.data.model.ScanLocationRequest
 import com.landmarkgroup.globalaudit.data.model.AddStagingRequest
+import com.landmarkgroup.globalaudit.data.model.ClearAuditRequest
 import com.landmarkgroup.globalaudit.data.model.SharedAuthData
 import com.landmarkgroup.globalaudit.utils.DeviceUtils
 import android.content.Context
@@ -101,7 +102,7 @@ class AuditViewModel : ViewModel() {
         _scanZoneError.value = null
         return try {
             val auth = SharedAuthData.getAuthData()
-            val userId = auth?.employeeIdKey ?: auth?.usernameKey ?: ""
+            val userId = auth?.employeeIdKey ?: ""
             val request = ScanLocationRequest(
                 zone = _currentZoneId.value,
                 location = _currentLocationId.value,
@@ -144,7 +145,7 @@ class AuditViewModel : ViewModel() {
         _scanZoneError.value = null
         return try {
             val auth = SharedAuthData.getAuthData()
-            val userId = auth?.employeeIdKey ?: auth?.usernameKey ?: ""
+            val userId = auth?.employeeIdKey ?: ""
             val qty = _currentQuantity.value.trim().toIntOrNull() ?: 0
             val request = AddStagingRequest(
                 zone = _currentZoneId.value,
@@ -177,6 +178,28 @@ class AuditViewModel : ViewModel() {
             false
         } finally {
             _isLoading.value = false
+        }
+    }
+    
+    suspend fun clearAuditRemote(context: Context, zone: String) {
+        try {
+            val auth = SharedAuthData.getAuthData()
+            val userId = auth?.employeeIdKey ?: ""
+            val req = ClearAuditRequest(
+                zone = zone,
+                userId = userId,
+                deviceId = DeviceUtils.getDeviceId(context)
+            )
+            // Fire-and-forget; do not block navigation and ignore errors/result
+            NetworkModule.auditApiService.clearAudit(req)
+        } catch (_: Exception) {
+            // Swallow errors: user has already confirmed cancel/edit
+        }
+    }
+    
+    fun launchClearAuditRemote(context: Context, zone: String) {
+        viewModelScope.launch {
+            clearAuditRemote(context, zone)
         }
     }
     

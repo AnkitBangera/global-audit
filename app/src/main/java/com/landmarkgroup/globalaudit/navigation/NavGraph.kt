@@ -218,6 +218,7 @@ fun NavGraph(
                 showCancelDialog = showCancelDialog,
                 onDismissCancelDialog = { showCancelDialog = false },
                 onConfirmCancel = {
+                    auditViewModel.launchClearAuditRemote(context, zoneId)
                     auditViewModel.clearAudit()
                     showCancelDialog = false
                     navController.navigate(Screen.ZoneSelection.route) {
@@ -232,6 +233,8 @@ fun NavGraph(
             val auditData = auditDataState
             
             if (auditData != null) {
+                val scope = rememberCoroutineScope()
+                val context = androidx.compose.ui.platform.LocalContext.current
                 var showCancelDialog by remember { mutableStateOf(false) }
                 
                 SummaryScreen(
@@ -248,6 +251,7 @@ fun NavGraph(
                     showCancelDialog = showCancelDialog,
                     onDismissCancelDialog = { showCancelDialog = false },
                     onConfirmCancel = {
+                        auditViewModel.launchClearAuditRemote(context, auditData.zoneId)
                         auditViewModel.clearAudit()
                         showCancelDialog = false
                         navController.navigate(Screen.ZoneSelection.route) {

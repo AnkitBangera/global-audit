@@ -23,12 +23,8 @@ class AuthInterceptor : Interceptor {
         }
         
         // Inject common user/session headers for ALL requests (IBM + NGINX)
-        // Use employeeId for USER-ID if available; fallback to display name
-        if (!authData.employeeIdKey.isNullOrEmpty()) {
-            builder.header("USER-ID", authData.employeeIdKey!!)
-        } else {
-            authData.usernameKey?.let { builder.header("USER-ID", it) }
-        }
+        // Use employeeId for USER-ID only
+        authData.employeeIdKey?.let { builder.header("USER-ID", it) }
         authData.selectedFacilityKey?.let { builder.header("FACILITY-ID", it) }
 
         // IBM API Gateway client id header required by both IBM and NGINX gateways
@@ -39,7 +35,10 @@ class AuthInterceptor : Interceptor {
         // Build and print a curl command for scan-zone API for backend verification
         try {
             val urlStr = requestWithHeaders.url.toString()
-            if (urlStr.contains("/audit/scan-zone") || urlStr.contains("/audit/scan-location") || urlStr.contains("/audit/add-staging")) {
+            if (urlStr.contains("/audit/scan-zone") ||
+                urlStr.contains("/audit/scan-location") ||
+                urlStr.contains("/audit/add-staging") ||
+                urlStr.contains("/audit/clear")) {
                 val sb = StringBuilder()
                 sb.append("curl --location \\").append("\n")
                     .append("  '").append(urlStr).append("' \\").append("\n")

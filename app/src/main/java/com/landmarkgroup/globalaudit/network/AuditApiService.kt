@@ -3,6 +3,7 @@ package com.landmarkgroup.globalaudit.network
 import com.landmarkgroup.globalaudit.data.model.ApiStatusResponse
 import com.landmarkgroup.globalaudit.data.model.ScanLocationRequest
 import com.landmarkgroup.globalaudit.data.model.AddStagingRequest
+import com.landmarkgroup.globalaudit.data.model.ClearAuditRequest
 import com.landmarkgroup.globalaudit.data.model.ScanZoneRequest
 import retrofit2.Response
 import retrofit2.http.Body
@@ -27,4 +28,8 @@ interface AuditApiService {
     // POST /warehouse-ops/apps/digitalwms/warehouse/audit/add-staging
     @POST("apps/digitalwms/warehouse/audit/add-staging")
     suspend fun addStaging(@Body request: AddStagingRequest): Response<ApiStatusResponse>
+
+    // POST /warehouse-ops/apps/digitalwms/warehouse/audit/clear
+    @POST("apps/digitalwms/warehouse/audit/clear")
+    suspend fun clearAudit(@Body request: ClearAuditRequest): Response<ApiStatusResponse>
 }
