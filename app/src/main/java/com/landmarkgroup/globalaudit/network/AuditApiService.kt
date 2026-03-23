@@ -5,9 +5,12 @@ import com.landmarkgroup.globalaudit.data.model.ScanLocationRequest
 import com.landmarkgroup.globalaudit.data.model.AddStagingRequest
 import com.landmarkgroup.globalaudit.data.model.ClearAuditRequest
 import com.landmarkgroup.globalaudit.data.model.ScanZoneRequest
+import com.landmarkgroup.globalaudit.data.model.SummaryResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
+import retrofit2.http.GET
+import retrofit2.http.Query
 
 /**
  * Retrofit service for NGINX-backed endpoints (warehouse-ops, audit operations, etc.).
@@ -32,4 +35,12 @@ interface AuditApiService {
     // POST /warehouse-ops/apps/digitalwms/warehouse/audit/clear
     @POST("apps/digitalwms/warehouse/audit/clear")
     suspend fun clearAudit(@Body request: ClearAuditRequest): Response<ApiStatusResponse>
+
+    // GET /warehouse-ops/apps/digitalwms/warehouse/audit/summary
+    @GET("apps/digitalwms/warehouse/audit/summary")
+    suspend fun getAuditSummary(
+        @Query("zone") zone: String,
+        @Query("userId") userId: String,
+        @Query("deviceId") deviceId: String
+    ): Response<SummaryResponse>
 }

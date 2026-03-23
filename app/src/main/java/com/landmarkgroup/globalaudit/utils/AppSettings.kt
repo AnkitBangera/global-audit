@@ -23,6 +23,7 @@ object AppSettings {
     private const val KEY_SELECTED_FACILITY = "SelectedFacility"
     private const val KEY_WAREHOUSE_CODE = "WarehouseCode"
     private const val KEY_USERNAME = "Username"
+    private const val KEY_EMPLOYEE_ID = "EmployeeId"
     private const val KEY_PROFILE_PICTURE_URL = "ProfilePictureUrl"
     private const val KEY_PERMISSIBLE_WAREHOUSES = "PermissibleWarehouses"
     private const val KEY_PERMISSIBLE_FACILITIES = "PermissibleFacilities"
@@ -103,6 +104,7 @@ object AppSettings {
             .putString(KEY_SELECTED_FACILITY, authData.selectedFacilityKey)
             .putString(KEY_WAREHOUSE_CODE, authData.warehouseCodeKey)
             .putString(KEY_USERNAME, authData.usernameKey)
+            .putString(KEY_EMPLOYEE_ID, authData.employeeIdKey)
             .putString(KEY_PROFILE_PICTURE_URL, authData.profilePictureUrl)
             .putStringSet(KEY_PERMISSIBLE_WAREHOUSES, authData.permissableWarehouses.toSet())
             .putStringSet(KEY_PERMISSIBLE_FACILITIES, authData.permissableFacilities.toSet())
@@ -122,6 +124,8 @@ object AppSettings {
             return null
         }
 
+        val employeeId = prefs.getString(KEY_EMPLOYEE_ID, null)
+            ?: JwtUtils.extractForKey(idToken, "SamAccountName")
         return AuthData(
             accessTokenKey = accessToken,
             idTokenKey = idToken,
@@ -129,6 +133,7 @@ object AppSettings {
             selectedFacilityKey = prefs.getString(KEY_SELECTED_FACILITY, null),
             warehouseCodeKey = prefs.getString(KEY_WAREHOUSE_CODE, null),
             usernameKey = prefs.getString(KEY_USERNAME, null),
+            employeeIdKey = employeeId,
             profilePictureUrl = prefs.getString(KEY_PROFILE_PICTURE_URL, null),
             permissableWarehouses = prefs.getStringSet(KEY_PERMISSIBLE_WAREHOUSES, emptySet())?.toList() ?: emptyList(),
             permissableFacilities = prefs.getStringSet(KEY_PERMISSIBLE_FACILITIES, emptySet())?.toList() ?: emptyList()
@@ -144,6 +149,7 @@ object AppSettings {
             .remove(KEY_SELECTED_FACILITY)
             .remove(KEY_WAREHOUSE_CODE)
             .remove(KEY_USERNAME)
+            .remove(KEY_EMPLOYEE_ID)
             .remove(KEY_PROFILE_PICTURE_URL)
             .remove(KEY_PERMISSIBLE_WAREHOUSES)
             .remove(KEY_PERMISSIBLE_FACILITIES)

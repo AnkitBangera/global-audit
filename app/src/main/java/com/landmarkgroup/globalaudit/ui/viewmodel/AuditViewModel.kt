@@ -15,6 +15,8 @@ import com.landmarkgroup.globalaudit.data.model.AddStagingRequest
 import com.landmarkgroup.globalaudit.data.model.ClearAuditRequest
 import com.landmarkgroup.globalaudit.data.model.SharedAuthData
 import com.landmarkgroup.globalaudit.utils.DeviceUtils
+import com.landmarkgroup.globalaudit.utils.JwtUtils
+import com.landmarkgroup.globalaudit.utils.AppSettings
 import android.content.Context
 
 class AuditViewModel : ViewModel() {
@@ -102,7 +104,20 @@ class AuditViewModel : ViewModel() {
         _scanZoneError.value = null
         return try {
             val auth = SharedAuthData.getAuthData()
-            val userId = auth?.employeeIdKey ?: ""
+            var userId: String = auth?.employeeIdKey ?: ""
+            if (userId.isBlank()) {
+                val idToken = auth?.idTokenKey
+                val fromJwt = if (!idToken.isNullOrBlank()) JwtUtils.extractForKey(idToken, "SamAccountName") else null
+                if (!fromJwt.isNullOrBlank()) {
+                    userId = fromJwt
+                    // Persist for future calls and headers
+                    auth?.employeeIdKey = fromJwt
+                    if (auth != null) {
+                        AppSettings.saveAuthData(context, auth)
+                        SharedAuthData.setAuthData(auth)
+                    }
+                }
+            }
             val request = ScanLocationRequest(
                 zone = _currentZoneId.value,
                 location = _currentLocationId.value,
@@ -145,7 +160,19 @@ class AuditViewModel : ViewModel() {
         _scanZoneError.value = null
         return try {
             val auth = SharedAuthData.getAuthData()
-            val userId = auth?.employeeIdKey ?: ""
+            var userId: String = auth?.employeeIdKey ?: ""
+            if (userId.isBlank()) {
+                val idToken = auth?.idTokenKey
+                val fromJwt = if (!idToken.isNullOrBlank()) JwtUtils.extractForKey(idToken, "SamAccountName") else null
+                if (!fromJwt.isNullOrBlank()) {
+                    userId = fromJwt
+                    auth?.employeeIdKey = fromJwt
+                    if (auth != null) {
+                        AppSettings.saveAuthData(context, auth)
+                        SharedAuthData.setAuthData(auth)
+                    }
+                }
+            }
             val qty = _currentQuantity.value.trim().toIntOrNull() ?: 0
             val request = AddStagingRequest(
                 zone = _currentZoneId.value,
@@ -181,10 +208,72 @@ class AuditViewModel : ViewModel() {
         }
     }
     
+    suspend fun fetchSummary(context: Context): Boolean {
+        _isLoading.value = true
+        _scanZoneError.value = null
+        return try {
+            val auth = SharedAuthData.getAuthData()
+            var userId: String = auth?.employeeIdKey ?: ""
+            if (userId.isBlank()) {
+                val idToken = auth?.idTokenKey
+                val fromJwt = if (!idToken.isNullOrBlank()) JwtUtils.extractForKey(idToken, "SamAccountName") else null
+                if (!fromJwt.isNullOrBlank()) {
+                    userId = fromJwt
+                    auth?.employeeIdKey = fromJwt
+                    if (auth != null) {
+                        AppSettings.saveAuthData(context, auth)
+                        SharedAuthData.setAuthData(auth)
+                    }
+                }
+            }
+            val zone = _currentZoneId.value
+            val deviceId = DeviceUtils.getDeviceId(context)
+            
+            val response = NetworkModule.auditApiService.getAuditSummary(
+                zone = zone,
+                userId = userId,
+                deviceId = deviceId
+            )
+            if (response.isSuccessful) {
+                val body = response.body()
+                val bins = body?.scannedLocations.orEmpty().map { item ->
+                    LocationBin(
+                        locationId = item.locationId,
+                        quantity = item.unitQty.toInt()
+                    )
+                }
+                _auditData.value = AuditData(zoneId = zone, bins = bins)
+                true
+            } else {
+                val msg = "Fetch summary failed: ${response.code()}"
+                _scanZoneError.value = msg
+                false
+            }
+        } catch (e: Exception) {
+            val msg = e.message ?: "Unknown error"
+            _scanZoneError.value = msg
+            false
+        } finally {
+            _isLoading.value = false
+        }
+    }
+    
     suspend fun clearAuditRemote(context: Context, zone: String) {
         try {
             val auth = SharedAuthData.getAuthData()
-            val userId = auth?.employeeIdKey ?: ""
+            var userId: String = auth?.employeeIdKey ?: ""
+            if (userId.isBlank()) {
+                val idToken = auth?.idTokenKey
+                val fromJwt = if (!idToken.isNullOrBlank()) JwtUtils.extractForKey(idToken, "SamAccountName") else null
+                if (!fromJwt.isNullOrBlank()) {
+                    userId = fromJwt
+                    auth?.employeeIdKey = fromJwt
+                    if (auth != null) {
+                        AppSettings.saveAuthData(context, auth)
+                        SharedAuthData.setAuthData(auth)
+                    }
+                }
+            }
             val req = ClearAuditRequest(
                 zone = zone,
                 userId = userId,

@@ -211,8 +211,11 @@ fun NavGraph(
                     showCancelDialog = true
                 },
                 onSummary = {
-                    if (binCount > 0) {
-                        navController.navigate(Screen.Summary.route)
+                    scope.launch {
+                        val ok = auditViewModel.fetchSummary(context)
+                        if (ok) {
+                            navController.navigate(Screen.Summary.route)
+                        }
                     }
                 },
                 showCancelDialog = showCancelDialog,
