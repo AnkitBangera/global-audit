@@ -43,4 +43,8 @@ interface AuditApiService {
         @Query("userId") userId: String,
         @Query("deviceId") deviceId: String
     ): Response<SummaryResponse>
+
+    // POST /warehouse-ops/apps/digitalwms/warehouse/audit/submit
+    @POST("apps/digitalwms/warehouse/audit/submit")
+    suspend fun submitAudit(@Body request: ClearAuditRequest): Response<ApiStatusResponse>
 }

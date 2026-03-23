@@ -246,9 +246,26 @@ fun NavGraph(
                         showCancelDialog = true
                     },
                     onConfirm = {
-                        auditViewModel.submitAudit()
-                        navController.navigate(Screen.Success.route) {
-                            popUpTo(Screen.GlobalStockAudit.route) { inclusive = false }
+                        scope.launch {
+                            val (ok, msg) = auditViewModel.submitAuditRemote(context, auditData.zoneId)
+                            val text = if (msg.isNotBlank()) msg else if (ok) "Submitted successfully" else "Submit failed"
+                            val toast = android.widget.Toast.makeText(
+                                context,
+                                text,
+                                android.widget.Toast.LENGTH_SHORT
+                            )
+                            val bgHex = if (ok) "#388E3C" else "#D32F2F"
+                            toast.view?.background =
+                                android.graphics.drawable.ColorDrawable(android.graphics.Color.parseColor(bgHex))
+                            val tv = toast.view?.findViewById<android.widget.TextView>(android.R.id.message)
+                            tv?.setTextColor(android.graphics.Color.WHITE)
+                            toast.setGravity(android.view.Gravity.BOTTOM, 0, 120)
+                            toast.show()
+                            if (ok) {
+                                navController.navigate(Screen.Success.route) {
+                                    popUpTo(Screen.GlobalStockAudit.route) { inclusive = false }
+                                }
+                            }
                         }
                     },
                     showCancelDialog = showCancelDialog,

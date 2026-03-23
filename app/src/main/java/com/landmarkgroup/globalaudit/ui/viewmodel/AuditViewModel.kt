@@ -329,10 +329,42 @@ class AuditViewModel : ViewModel() {
         _addStagingToast.value = null
     }
 
-    fun submitAudit() {
-        viewModelScope.launch {
-            // Here you would typically save to database or send to API
-            // For now, we'll just keep the data
+    suspend fun submitAuditRemote(context: Context, zone: String): Pair<Boolean, String> {
+        _isLoading.value = true
+        return try {
+            val auth = SharedAuthData.getAuthData()
+            var userId: String = auth?.employeeIdKey ?: ""
+            if (userId.isBlank()) {
+                val idToken = auth?.idTokenKey
+                val fromJwt = if (!idToken.isNullOrBlank()) JwtUtils.extractForKey(idToken, "SamAccountName") else null
+                if (!fromJwt.isNullOrBlank()) {
+                    userId = fromJwt
+                    auth?.employeeIdKey = fromJwt
+                    if (auth != null) {
+                        AppSettings.saveAuthData(context, auth)
+                        SharedAuthData.setAuthData(auth)
+                    }
+                }
+            }
+            val req = ClearAuditRequest(
+                zone = zone,
+                userId = userId,
+                deviceId = DeviceUtils.getDeviceId(context)
+            )
+            val response = NetworkModule.auditApiService.submitAudit(req)
+            if (response.isSuccessful) {
+                val body = response.body()
+                val success = body?.returnCode.equals("Y", true)
+                val message = body?.errorMessage ?: ""
+                val finalMessage = if (message.isNotBlank()) message else if (success) "Submitted successfully" else "Submit failed"
+                Pair(success, finalMessage)
+            } else {
+                Pair(false, "Submit failed: ${response.code()}")
+            }
+        } catch (e: Exception) {
+            Pair(false, e.message ?: "Unknown error")
+        } finally {
+            _isLoading.value = false
         }
     }
 }
