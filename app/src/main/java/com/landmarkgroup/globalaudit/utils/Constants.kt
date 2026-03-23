@@ -9,6 +9,7 @@ import android.content.Context
 object Constants {
     const val IBM_URL = "https://apidev.landmarkgroup.com"
     const val NGINX_URL = "https://devapi1.landmarkgroup.com/warehouse-ops/"
+    const val EFULFILL_URL = "https://devapi3.landmarkgroup.com/"
     
     /**
      * Gets the device ID for the current device.

@@ -5,6 +5,7 @@ import android.util.Log
 object SharedAuthData {
 
     private var authData: AuthData? = null
+    private var warehouseFeatures: List<WarehouseFeature>? = null
 
     fun setAuthData(data: AuthData) {
         authData = data
@@ -16,6 +17,7 @@ object SharedAuthData {
 
     fun clearAuthData() {
         authData = null
+        warehouseFeatures = null
     }
 
     fun getUserProfileImageUrl(): String? {
@@ -26,5 +28,13 @@ object SharedAuthData {
 
     fun getUserDisplayName(): String? {
         return authData?.usernameKey
+    }
+
+    fun setWarehouseFeatures(features: List<WarehouseFeature>?) {
+        warehouseFeatures = features
+    }
+
+    fun getWarehouseFeatures(): List<WarehouseFeature>? {
+        return warehouseFeatures
     }
 }

@@ -244,6 +244,19 @@ class LoginViewModel(
             if (sharedAuthData != null) {
                 AppSettings.saveAuthData(appContext, sharedAuthData)
             }
+            // Fire and store warehouse feature flags for the selected facility (numeric id like 1001000 for BU)
+            try {
+                val locationId = sharedAuthData?.warehouseCodeKey
+                    ?: UserFacility.fromName(facility)?.id
+                    ?: facility
+                Log.d("LoginViewModel", "Calling eFulfill features endpoint for location: $locationId")
+                val features = NetworkModule.efulfillApiService.getWarehouseFeatures(locationId)
+                SharedAuthData.setWarehouseFeatures(features)
+                Log.d("LoginViewModel", "Fetched ${features.size} warehouse feature flags for location $locationId")
+            } catch (e: Exception) {
+                Log.e("LoginViewModel", "Failed to fetch warehouse features for facility $facility", e)
+                // Non-blocking: proceed to app even if this call fails
+            }
             _uiState.value = LoginUiState.NavigateToMainApp
         }
     }

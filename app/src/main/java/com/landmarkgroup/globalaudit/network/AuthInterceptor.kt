@@ -29,6 +29,14 @@ class AuthInterceptor : Interceptor {
 
         // IBM API Gateway client id header required by both IBM and NGINX gateways
         builder.header(AuthConstants.API_CLIENT_ID_HEADER, AuthConstants.API_CLIENT_ID_VALUE)
+        // Landmark client id header required by IBM gateway (parity with Xamarin)
+        builder.header("x-landmark-client-id", AuthConstants.API_CLIENT_ID_VALUE)
+        // Explicit id_token header (parity with Xamarin)
+        token?.let { builder.header("id_token", it) }
+        // Additional parity headers
+        authData.usernameKey?.let { builder.header("user", it) }
+        authData.warehouseCodeKey?.let { builder.header("location", it) }
+        authData.selectedFacilityKey?.let { builder.header("facility", it) }
         
         val requestWithHeaders = builder.build()
 
@@ -38,7 +46,8 @@ class AuthInterceptor : Interceptor {
             if (urlStr.contains("/audit/scan-zone") ||
                 urlStr.contains("/audit/scan-location") ||
                 urlStr.contains("/audit/add-staging") ||
-                urlStr.contains("/audit/clear")) {
+                urlStr.contains("/audit/clear") ||
+                urlStr.contains("/apps/efulfill/ui/feature/list/warehouses")) {
                 val sb = StringBuilder()
                 sb.append("curl --location \\").append("\n")
                     .append("  '").append(urlStr).append("' \\").append("\n")

@@ -41,9 +41,19 @@ object NetworkModule {
         .addConverterFactory(MoshiConverterFactory.create(moshi))
         .build()
 
+    // eFulfill Retrofit (devapi3 - feature flags by location)
+    private val efulfillRetrofit: Retrofit = Retrofit.Builder()
+        .baseUrl(Constants.EFULFILL_URL)
+        .client(okHttpClient)
+        .addConverterFactory(MoshiConverterFactory.create(moshi))
+        .build()
+
     // IBM-based service for authorization and user profile
     val sahlaApiService: SahlaApiService = ibmRetrofit.create(SahlaApiService::class.java)
 
     // NGINX-based service placeholder for audit/warehouse operations
     val auditApiService: AuditApiService = nginxRetrofit.create(AuditApiService::class.java)
+
+    // eFulfill-based service for warehouse feature flags
+    val efulfillApiService: EfulfillApiService = efulfillRetrofit.create(EfulfillApiService::class.java)
 }
