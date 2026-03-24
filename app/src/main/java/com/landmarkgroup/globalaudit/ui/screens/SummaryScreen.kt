@@ -1,6 +1,7 @@
 package com.landmarkgroup.globalaudit.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,15 +9,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,113 +42,135 @@ fun SummaryScreen(
             onConfirm = onConfirmCancel
         )
     }
-    
+
+    // Colors close to the reference screenshot
+    val primaryBlue = Color(0xFF2563EB)       // Blue for header and confirm
+    val primaryBlueDark = Color(0xFF1E3A8A)
+    val chipBlueBg = Color(0xFFE8F0FF)
+    val chipBlueText = Color(0xFF1E3A8A)
+    val chipGreenBg = Color(0xFFE8F5E9)
+    val chipGreenText = Color(0xFF2E7D32)
+    val chipOrangeBg = Color(0xFFFFF3E0)
+    val chipOrangeText = Color(0xFFEF6C00)
+    val pageBg = Color(0xFFF5F7FB)
+    val cardBorder = Color(0xFFE5E7EB)
+    val labelGray = Color(0xFF9CA3AF)
+    val textDark = Color(0xFF1F2937)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
+            .background(pageBg)
             .safeAreaPadding()
     ) {
-        // Header Section (Fixed) - Enhanced with elevation
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = Color(0xFF4A90E2),
-            shadowElevation = 4.dp
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 20.dp)
-            ) {
-                Text(
-                    text = "Confirm Audit",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.align(Alignment.Center)
+        // Header with rounded bottom and gradient
+        val headerShape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(headerShape)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(primaryBlueDark, primaryBlue)
+                    )
                 )
-            }
+                .padding(vertical = 20.dp)
+        ) {
+            Text(
+                text = "Confirm Audit",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.align(Alignment.Center)
+            )
         }
-        
-        // Scrollable Content
+
+        // Content
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(24.dp)
+                .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
-            // Summary Cards
+            // Top chips row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Zone Card
-                SummaryCard(
+                StatChip(
                     label = "ZONE",
                     value = auditData.zoneId,
                     icon = Icons.Default.Layers,
-                    backgroundColor = Color(0xFFE3F2FD),
-                    iconColor = Color(0xFF1976D2),
-                    textColor = Color(0xFF1976D2),
+                    iconTint = chipBlueText,
+                    valueColor = chipBlueText,
+                    containerColor = chipBlueBg,
                     modifier = Modifier.weight(1f)
                 )
-                
-                // Locations Card
-                SummaryCard(
-                    label = "LOCATIONS",
+                StatChip(
+                    label = "LOCS",
                     value = auditData.locationCount.toString(),
                     icon = Icons.Default.LocationOn,
-                    backgroundColor = Color(0xFFE8F5E9),
-                    iconColor = Color(0xFF388E3C),
-                    textColor = Color(0xFF388E3C),
+                    iconTint = chipGreenText,
+                    valueColor = chipGreenText,
+                    containerColor = chipGreenBg,
                     modifier = Modifier.weight(1f)
                 )
-                
-                // Total Quantity Card
-                SummaryCard(
-                    label = "TOTAL QTY",
+                StatChip(
+                    label = "TOTAL",
                     value = auditData.totalQuantity.toString(),
-                    icon = Icons.Default.Storage,
-                    backgroundColor = Color(0xFFF3E5F5),
-                    iconColor = Color(0xFF7B1FA2),
-                    textColor = Color(0xFF7B1FA2),
+                    icon = Icons.Default.Layers,
+                    iconTint = chipOrangeText,
+                    valueColor = chipOrangeText,
+                    containerColor = chipOrangeBg,
                     modifier = Modifier.weight(1f)
                 )
             }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Location Summary Header
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Inventory list header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Location Summary",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF4A90E2)
+                    text = "INVENTORY LIST",
+                    fontSize = 12.sp,
+                    letterSpacing = 1.2.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = labelGray
                 )
-                
-                // Items Badge
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = Color(0xFF4A90E2)
+                    color = chipBlueBg,
+                    contentColor = chipBlueText,
+                    shape = RoundedCornerShape(16.dp),
+                    border = ButtonDefaults.outlinedButtonBorder
                 ) {
-                    Text(
-                        text = "${auditData.bins.size} ITEMS",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Layers,
+                            contentDescription = null,
+                            tint = chipBlueText,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "${auditData.bins.size} ITEMS",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = chipBlueText
+                        )
+                    }
                 }
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Scrollable Location Summary List
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // List container
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -154,7 +179,7 @@ fun SummaryScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp)
+                        .padding(12.dp)
                 ) {
                     Column(
                         modifier = Modifier
@@ -163,33 +188,38 @@ fun SummaryScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         auditData.bins.forEach { bin ->
-                            LocationSummaryItem(
+                            LocationSummaryCard(
                                 locationId = bin.locationId,
-                                quantity = bin.quantity
+                                quantity = bin.quantity,
+                                labelGray = labelGray,
+                                textDark = textDark,
+                                primaryBlue = primaryBlue,
+                                cardBorder = cardBorder
                             )
                         }
                     }
                 }
             }
         }
-        
-        // Fixed Bottom Buttons (Non-scrollable)
+
+        // Bottom action bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFFF5F5F5))
-                .padding(24.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                .background(pageBg)
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             OutlinedButton(
                 onClick = onEdit,
                 modifier = Modifier
                     .weight(1f)
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
+                    .height(52.dp),
+                shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Color(0xFF333333)
-                )
+                    contentColor = textDark
+                ),
+                border = ButtonDefaults.outlinedButtonBorder
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -198,25 +228,25 @@ fun SummaryScreen(
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = null,
-                        tint = Color(0xFF333333),
-                        modifier = Modifier.size(20.dp)
+                        tint = textDark,
+                        modifier = Modifier.size(18.dp)
                     )
                     Text(
-                        text = "Edit",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
+                        text = "EDIT",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
-            
+
             Button(
                 onClick = onConfirm,
                 modifier = Modifier
                     .weight(1f)
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
+                    .height(52.dp),
+                shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF4A90E2)
+                    containerColor = primaryBlue
                 )
             ) {
                 Row(
@@ -227,13 +257,13 @@ fun SummaryScreen(
                         imageVector = Icons.Default.Check,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                     Text(
-                        text = "Confirm",
+                        text = "CONFIRM",
                         color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -242,114 +272,130 @@ fun SummaryScreen(
 }
 
 @Composable
-fun SummaryCard(
+private fun StatChip(
     label: String,
     value: String,
     icon: ImageVector,
-    backgroundColor: Color,
-    iconColor: Color,
-    textColor: Color,
+    iconTint: Color,
+    valueColor: Color,
+    containerColor: Color,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.height(100.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor)
+    Surface(
+        modifier = modifier.height(74.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = containerColor,
+        shadowElevation = 0.dp
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = Color.White.copy(alpha = 0.8f),
+                tonalElevation = 0.dp,
+                shadowElevation = 0.dp
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier
+                        .size(28.dp)
+                        .padding(6.dp)
+                )
+            }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
                     text = label,
                     fontSize = 10.sp,
+                    letterSpacing = 1.0.sp,
                     fontWeight = FontWeight.Medium,
-                    color = textColor.copy(alpha = 0.8f)
+                    color = valueColor.copy(alpha = 0.8f)
                 )
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = iconColor,
-                    modifier = Modifier.size(24.dp)
+                Text(
+                    text = value,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = valueColor
                 )
             }
-            Text(
-                text = value,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = textColor
-            )
         }
     }
 }
 
 @Composable
-fun LocationSummaryItem(
+private fun LocationSummaryCard(
     locationId: String,
-    quantity: Int
+    quantity: Int,
+    labelGray: Color,
+    textDark: Color,
+    primaryBlue: Color,
+    cardBorder: Color
 ) {
-    Row(
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = Color.White,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                Color(0xFFF5F5F5),
-                RoundedCornerShape(8.dp)
-            )
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .border(width = 1.dp, color = cardBorder, shape = RoundedCornerShape(14.dp))
+            .padding(horizontal = 14.dp, vertical = 12.dp)
     ) {
-        // Left side: Icon and Location ID
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.Storage,
-                contentDescription = null,
-                tint = Color(0xFF999999),
-                modifier = Modifier.size(24.dp)
-            )
-            Column {
-                Text(
-                    text = locationId,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF333333)
-                )
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "LOCATION ID",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = Color(0xFF999999)
+                    fontSize = 11.sp,
+                    letterSpacing = 1.0.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = labelGray
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = locationId,
+                    fontSize = 15.sp,
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.SemiBold,
+                    color = textDark
                 )
             }
-        }
-        
-        // Right side: Quantity
-        Column(
-            horizontalAlignment = Alignment.End
-        ) {
-            Text(
-                text = quantity.toString(),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF333333)
-            )
-            Text(
-                text = "QUANTITY",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Normal,
-                color = Color(0xFF999999)
-            )
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "QUANTITY",
+                    fontSize = 11.sp,
+                    letterSpacing = 1.0.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = labelGray
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = quantity.toString(),
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = primaryBlue
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "PCS",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = labelGray
+                    )
+                }
+            }
         }
     }
 }

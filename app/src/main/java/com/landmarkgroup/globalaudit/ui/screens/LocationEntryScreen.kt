@@ -18,6 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -35,6 +36,7 @@ import androidx.compose.animation.shrinkVertically
 import com.landmarkgroup.globalaudit.ui.utils.safeAreaPadding
 import androidx.compose.ui.platform.LocalContext
 import com.landmarkgroup.globalaudit.MainActivity
+import androidx.compose.foundation.BorderStroke
 
 @Composable
 fun LocationEntryScreen(
@@ -84,25 +86,50 @@ fun LocationEntryScreen(
         )
     }
     
+    val violet = Color(0xFF5B4AF7)
+    val pageBgTop = Color(0xFFEFF2FF)
+    val pageBgBottom = Color.White
+    val labelGray = Color(0xFF9CA3AF)
+    val textDark = Color(0xFF111827)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
+            .background(Brush.verticalGradient(listOf(pageBgTop, pageBgBottom)))
             .safeAreaPadding()
             .padding(24.dp)
     ) {
-        // Header
-        Text(
-            text = "Zone $zoneId",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF333333)
-        )
-        
+        // Header (ZONE + zoneId with accent bar + subtitle)
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(56.dp)
+                    .background(violet, RoundedCornerShape(2.dp))
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = "ZONE",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = violet,
+                    letterSpacing = 1.0.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = zoneId,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = textDark
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(8.dp))
-        
         Text(
-            text = "Scan/enter location",
+            text = "Scan or enter location details",
             fontSize = 14.sp,
             color = Color(0xFF666666)
         )
@@ -112,8 +139,9 @@ fun LocationEntryScreen(
         // Input Card
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             Column(
                 modifier = Modifier.padding(24.dp),
@@ -126,9 +154,9 @@ fun LocationEntryScreen(
                     Text(
                         text = "LOCATION ID",
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF666666),
-                        letterSpacing = 0.5.sp
+                        fontWeight = FontWeight.SemiBold,
+                        color = labelGray,
+                        letterSpacing = 1.0.sp
                     )
                     
                     Row(
@@ -151,11 +179,11 @@ fun LocationEntryScreen(
                                         false
                                     }
                                 },
-                            placeholder = { Text("e.g. LOCN3", color = Color(0xFF999999)) },
-                            shape = RoundedCornerShape(8.dp),
+                            placeholder = { Text("Scan location...", color = Color(0xFFB0B7C3)) },
+                            shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = if (isLocationValid) Color(0xFF4CAF50) else Color(0xFF4A90E2),
-                                unfocusedBorderColor = if (isLocationValid) Color(0xFF4CAF50) else Color(0xFFE0E0E0)
+                                focusedBorderColor = violet,
+                                unfocusedBorderColor = if (isLocationValid) violet else Color(0xFFE0E0E0)
                             ),
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Text,
@@ -177,7 +205,7 @@ fun LocationEntryScreen(
                                         Icon(
                                             imageVector = Icons.Default.CheckCircle,
                                             contentDescription = "Valid",
-                                            tint = Color(0xFF4CAF50),
+                                            tint = violet,
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
@@ -212,9 +240,9 @@ fun LocationEntryScreen(
                             Text(
                                 text = "QUANTITY",
                                 fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color(0xFF666666),
-                                letterSpacing = 0.5.sp
+                                fontWeight = FontWeight.SemiBold,
+                                color = labelGray,
+                                letterSpacing = 1.0.sp
                             )
 
                             OutlinedTextField(
@@ -225,10 +253,10 @@ fun LocationEntryScreen(
                                     }
                                 },
                                 modifier = Modifier.fillMaxWidth(),
-                                placeholder = { Text("Enter quantity", color = Color(0xFF999999)) },
-                                shape = RoundedCornerShape(8.dp),
+                                placeholder = { Text("0", color = Color(0xFFB0B7C3)) },
+                                shape = RoundedCornerShape(12.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFF4A90E2),
+                                    focusedBorderColor = violet,
                                     unfocusedBorderColor = Color(0xFFE0E0E0)
                                 ),
                                 keyboardOptions = KeyboardOptions(
@@ -282,34 +310,65 @@ fun LocationEntryScreen(
                             )
                         }
 
-                        // Add Bin Button
-                        Button(
-                            onClick = onAddBin,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF4A90E2)
-                            ),
-                            enabled = locationId.isNotBlank() && quantity.isNotBlank() && (quantity.toIntOrNull() ?: 0) > 0
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                        // Add Bin Button changes color when quantity is entered
+                        val canAddBin = locationId.isNotBlank() && quantity.isNotBlank() && (quantity.toIntOrNull() ?: 0) > 0
+                        if (canAddBin) {
+                            Button(
+                                onClick = onAddBin,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = violet)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Text(
-                                    text = "Add Bin ($binCount)",
-                                    color = Color.White,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Text(
+                                        text = "Add Bin (${binCount})",
+                                        color = Color.White,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = {},
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = Color(0xFF8A94A6)
+                                ),
+                                border = BorderStroke(1.dp, Color(0xFFDDE3EA)),
+                                enabled = false
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = null,
+                                        tint = Color(0xFF8A94A6),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Text(
+                                        text = "Add Bin (${binCount})",
+                                        color = Color(0xFF8A94A6),
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
                             }
                         }
                     }
@@ -329,7 +388,7 @@ fun LocationEntryScreen(
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = Color(0xFF333333)
                 ),
@@ -360,9 +419,9 @@ fun LocationEntryScreen(
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF4A90E2)
+                    containerColor = violet
                 ),
                 enabled = binCount > 0
             ) {

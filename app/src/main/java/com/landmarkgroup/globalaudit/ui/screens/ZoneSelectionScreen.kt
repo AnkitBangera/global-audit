@@ -9,13 +9,17 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Camera
+import androidx.compose.material.icons.outlined.CropFree
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -54,11 +58,11 @@ fun ZoneSelectionScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
+            .background(Brush.verticalGradient(listOf(Color(0xFFEFF2FF), Color.White)))
             .safeAreaPadding()
             .padding(24.dp)
     ) {
-        // Back button and header
+        // Back button
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -73,31 +77,39 @@ fun ZoneSelectionScreen(
                 tint = Color(0xFF333333)
             )
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
+        // Header
         Text(
             text = "Select Zone",
-            fontSize = 28.sp,
+            fontSize = 30.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF333333)
+            color = Color(0xFF5B4AF7)
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         Text(
-            text = "Scan or enter zone ID to begin audit",
+            text = buildAnnotatedString {
+                append("Scan or enter your assigned ")
+                withStyle(SpanStyle(color = Color(0xFF5B4AF7), fontWeight = FontWeight.SemiBold)) {
+                    append("zone ID")
+                }
+                append(" to begin the audit session.")
+            },
             fontSize = 14.sp,
             color = Color(0xFF666666)
         )
-        
+
         Spacer(modifier = Modifier.height(24.dp))
         
         // Input Card
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             Column(
                 modifier = Modifier.padding(24.dp),
@@ -114,18 +126,18 @@ fun ZoneSelectionScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "ZONE ID",
+                        text = "ZONE IDENTIFIER",
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF666666),
-                        letterSpacing = 0.5.sp
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF5B4AF7),
+                        letterSpacing = 1.0.sp
                     )
                     
                     OutlinedTextField(
                         value = zoneId,
                         onValueChange = { zoneId = it.replace(" ", "") },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("e.g. ZONE1", color = Color(0xFF999999)) },
+                        placeholder = { Text("ZONE ID", color = Color(0xFF999999)) },
                         shape = RoundedCornerShape(8.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF4A90E2),
@@ -144,9 +156,9 @@ fun ZoneSelectionScreen(
                         ),
                         trailingIcon = {
                             Icon(
-                                imageVector = Icons.Default.Camera,
-                                contentDescription = "Hardware scanner active",
-                                modifier = Modifier.size(24.dp),
+                                imageVector = Icons.Outlined.CropFree,
+                                contentDescription = "Scan",
+                                modifier = Modifier.size(22.dp),
                                 tint = Color(0xFF666666)
                             )
                         },
@@ -171,9 +183,9 @@ fun ZoneSelectionScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(28.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF6C5CE7)
+                        containerColor = Color(0xFF5B4AF7)
                     ),
                     enabled = zoneId.isNotBlank() && !isLoading
                 ) {

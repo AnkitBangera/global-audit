@@ -7,12 +7,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import com.landmarkgroup.globalaudit.ui.utils.safeAreaPadding
 
 @Composable
@@ -21,6 +23,11 @@ fun SuccessScreen(
     binCount: Int,
     onBackToDashboard: () -> Unit
 ) {
+    LaunchedEffect(Unit) {
+        delay(1500)
+        onBackToDashboard()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -72,24 +79,12 @@ fun SuccessScreen(
         
         Spacer(modifier = Modifier.weight(1f))
         
-        // Back to Dashboard Button
-        Button(
-            onClick = onBackToDashboard,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = MaterialTheme.shapes.medium,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF1A237E)
-            )
-        ) {
-            Text(
-                text = "Back to Dashboard",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        // Auto navigate after 1.5s – no button
+        Text(
+            text = "Returning...",
+            fontSize = 14.sp,
+            color = Color(0xFF666666)
+        )
         
         Spacer(modifier = Modifier.height(32.dp))
     }
