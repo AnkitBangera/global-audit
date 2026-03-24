@@ -84,7 +84,7 @@ class AuditViewModel : ViewModel() {
                 }
                 success
             } else {
-                val msg = "Scan zone failed: ${response.code()}"
+                val msg = "Scan zone failed"
                 _scanZoneError.value = msg
                 _scanZoneToast.value = Pair(false, msg)
                 false
@@ -315,6 +315,10 @@ class AuditViewModel : ViewModel() {
         _currentZoneId.value = ""
         _currentLocationId.value = ""
         _currentQuantity.value = ""
+    }
+    
+    fun clearScanZoneError() {
+        _scanZoneError.value = null
     }
     
     fun clearScanZoneToast() {

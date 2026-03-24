@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.sp
 import com.landmarkgroup.globalaudit.R
 import com.landmarkgroup.globalaudit.data.model.SharedAuthData
 import com.landmarkgroup.globalaudit.ui.utils.safeAreaPadding
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
 
 @Composable
 fun GlobalStockAuditScreen(
@@ -31,6 +33,11 @@ fun GlobalStockAuditScreen(
 ) {
     val authData = SharedAuthData.getAuthData()
     val userName = authData?.usernameKey ?: "User"
+    val context = LocalContext.current
+    val features = SharedAuthData.getWarehouseFeatures()
+    val isAuditEnabled = features?.any {
+        it.featureName.equals("UI_FEATURE_GLOBAL_AUDIT_FACILITY_FLAG", ignoreCase = true) && it.featureEnabledValue
+    } ?: false
     
     Column(
         modifier = Modifier
@@ -75,8 +82,15 @@ fun GlobalStockAuditScreen(
                 .fillMaxWidth()
                 .height(180.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(Color(0xFF4A90E2))
-                .clickable { onGlobalStockAuditClick() },
+                .background(if (isAuditEnabled) Color(0xFF4A90E2) else Color(0xFFCFD8DC))
+                .clickable {
+                    if (isAuditEnabled) {
+                        onGlobalStockAuditClick()
+                    } else {
+                        Toast.makeText(context, "This feature is not available", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .alpha(if (isAuditEnabled) 1f else 0.6f),
             contentAlignment = Alignment.Center
         ) {
             Row(

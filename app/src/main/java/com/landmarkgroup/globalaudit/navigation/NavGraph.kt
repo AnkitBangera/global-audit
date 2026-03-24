@@ -100,6 +100,11 @@ fun NavGraph(
             val toastEvent by auditViewModel.scanZoneToast.collectAsState()
             val context = androidx.compose.ui.platform.LocalContext.current
 
+            // Clear any lingering scan-zone error when entering this screen
+            LaunchedEffect(Unit) {
+                auditViewModel.clearScanZoneError()
+            }
+
             LaunchedEffect(toastEvent) {
                 toastEvent?.let { pair ->
                     val success = pair.first
@@ -144,7 +149,10 @@ fun NavGraph(
             val zoneId by auditViewModel.currentZoneId.collectAsState()
             val locationId by auditViewModel.currentLocationId.collectAsState()
             val quantity by auditViewModel.currentQuantity.collectAsState()
-            val binCount = auditData?.bins?.size ?: 0
+            val binCount = auditData?.bins
+                ?.map { it.locationId }
+                ?.distinct()
+                ?.size ?: 0
             val isLocationValidated by auditViewModel.isLocationValidated.collectAsState()
             val locationToast by auditViewModel.scanLocationToast.collectAsState()
             val addStagingToast by auditViewModel.addStagingToast.collectAsState()
@@ -289,7 +297,7 @@ fun NavGraph(
             if (auditData != null) {
                 SuccessScreen(
                     zoneId = auditData.zoneId,
-                    binCount = auditData.bins.size,
+                    binCount = auditData.bins.map { it.locationId }.distinct().size,
                     onBackToDashboard = {
                         auditViewModel.clearAudit()
                         navController.navigate(Screen.GlobalStockAudit.route) {

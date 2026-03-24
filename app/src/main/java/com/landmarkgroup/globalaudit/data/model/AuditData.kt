@@ -7,6 +7,7 @@ data class AuditData(
     val totalQuantity: Int
         get() = bins.sumOf { it.quantity }
     
+    // Count unique locations, not total entries, for proper "LOCS" semantics
     val locationCount: Int
-        get() = bins.size
+        get() = bins.map { it.locationId }.distinct().size
 }
