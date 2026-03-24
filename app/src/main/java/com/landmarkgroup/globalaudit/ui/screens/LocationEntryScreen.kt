@@ -33,6 +33,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import com.landmarkgroup.globalaudit.ui.utils.safeAreaPadding
+import androidx.compose.ui.platform.LocalContext
+import com.landmarkgroup.globalaudit.MainActivity
 
 @Composable
 fun LocationEntryScreen(
@@ -53,6 +55,26 @@ fun LocationEntryScreen(
 ) {
     // Location is only "valid" once scan-location returns returnCode=Y.
     val isLocationValid = isLocationValidated
+
+    // Register hardware scanner callback (Zebra/Honeywell). Trim scanned data and auto-validate.
+    val context = LocalContext.current
+    DisposableEffect(Unit) {
+        val owner = "LocationEntryScreen"
+        if (context is MainActivity) {
+            MainActivity.setScanResultCallback({ barcode ->
+                val scanned = barcode.trim()
+                if (scanned.isNotBlank()) {
+                    onLocationIdChange(scanned)
+                    onScanLocation()
+                }
+            }, owner)
+        }
+        onDispose {
+            if (context is MainActivity) {
+                MainActivity.clearScanResultCallback(owner)
+            }
+        }
+    }
     
     // Cancel Confirmation Dialog
     if (showCancelDialog) {
@@ -116,7 +138,7 @@ fun LocationEntryScreen(
                     ) {
                         OutlinedTextField(
                             value = locationId,
-                            onValueChange = { onLocationIdChange(it) },
+                            onValueChange = { onLocationIdChange(it.replace(" ", "")) },
                             modifier = Modifier
                                 .weight(1f)
                                 .onPreviewKeyEvent { event ->

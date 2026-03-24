@@ -21,6 +21,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.landmarkgroup.globalaudit.ui.utils.safeAreaPadding
+import androidx.compose.ui.platform.LocalContext
+import com.landmarkgroup.globalaudit.MainActivity
 
 @Composable
 fun ZoneSelectionScreen(
@@ -30,6 +32,24 @@ fun ZoneSelectionScreen(
     onContinue: (String) -> Unit
 ) {
     var zoneId by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    DisposableEffect(Unit) {
+        val owner = "ZoneSelectionScreen"
+        if (context is MainActivity) {
+            MainActivity.setScanResultCallback({ barcode ->
+                val scanned = barcode.trim()
+                zoneId = scanned
+                if (scanned.isNotBlank() && !isLoading) {
+                    onContinue(scanned)
+                }
+            }, owner)
+        }
+        onDispose {
+            if (context is MainActivity) {
+                MainActivity.clearScanResultCallback(owner)
+            }
+        }
+    }
     
     Column(
         modifier = Modifier
@@ -103,7 +123,7 @@ fun ZoneSelectionScreen(
                     
                     OutlinedTextField(
                         value = zoneId,
-                        onValueChange = { zoneId = it },
+                        onValueChange = { zoneId = it.replace(" ", "") },
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = { Text("e.g. ZONE1", color = Color(0xFF999999)) },
                         shape = RoundedCornerShape(8.dp),
@@ -125,14 +145,8 @@ fun ZoneSelectionScreen(
                         trailingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Camera,
-                                contentDescription = "Scan",
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clickable {
-                                        // TODO: Implement barcode scanner
-                                        // For now, simulate scan with a test value
-                                        zoneId = "ZONE1"
-                                    },
+                                contentDescription = "Hardware scanner active",
+                                modifier = Modifier.size(24.dp),
                                 tint = Color(0xFF666666)
                             )
                         },
