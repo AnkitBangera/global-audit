@@ -252,9 +252,15 @@ class LoginViewModel(
                 Log.d("LoginViewModel", "Calling eFulfill features endpoint for location: $locationId")
                 val features = NetworkModule.efulfillApiService.getWarehouseFeatures(locationId)
                 SharedAuthData.setWarehouseFeatures(features)
-                Log.d("LoginViewModel", "Fetched ${features.size} warehouse feature flags for location $locationId")
+                val isAuditEnabled = features.any {
+                    it.featureName.equals("UI_FEATURE_GLOBAL_AUDIT_FACILITY_FLAG", ignoreCase = true) && it.featureEnabledValue
+                }
+                AppSettings.setGlobalAuditEnabled(appContext, isAuditEnabled)
+                Log.d("LoginViewModel", "Fetched ${features.size} warehouse feature flags for location $locationId; GlobalAuditEnabled=$isAuditEnabled")
             } catch (e: Exception) {
                 Log.e("LoginViewModel", "Failed to fetch warehouse features for facility $facility", e)
+                // Persist disabled if we couldn't fetch features to ensure safe default on next launch
+                AppSettings.setGlobalAuditEnabled(appContext, false)
                 // Non-blocking: proceed to app even if this call fails
             }
             _uiState.value = LoginUiState.NavigateToMainApp
@@ -266,7 +272,7 @@ class LoginViewModel(
         AppSettings.clearAuthData(appContext)
         _uiState.value = LoginUiState.Idle
     }
-
+    
     fun handleAuthFlowError(message: String) {
         Log.e("LoginViewModel", "Auth Flow Error: $message")
         SharedAuthData.clearAuthData()

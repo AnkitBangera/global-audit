@@ -16,6 +16,7 @@ import com.landmarkgroup.globalaudit.data.model.SharedAuthData
 import com.landmarkgroup.globalaudit.ui.screens.*
 import com.landmarkgroup.globalaudit.ui.viewmodel.AuditViewModel
 import com.landmarkgroup.globalaudit.ui.viewmodel.LoginViewModel
+import com.landmarkgroup.globalaudit.ui.utils.ToastUtils
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -109,19 +110,7 @@ fun NavGraph(
                 toastEvent?.let { pair ->
                     val success = pair.first
                     val msg = pair.second
-                    val toast = android.widget.Toast.makeText(
-                        context,
-                        msg,
-                        android.widget.Toast.LENGTH_SHORT
-                    )
-                    // Color the toast background: green for success, red for failure
-                    val bgHex = if (success) "#388E3C" else "#D32F2F"
-                    toast.view?.background =
-                        android.graphics.drawable.ColorDrawable(android.graphics.Color.parseColor(bgHex))
-                    val tv = toast.view?.findViewById<android.widget.TextView>(android.R.id.message)
-                    tv?.setTextColor(android.graphics.Color.WHITE)
-                    toast.setGravity(android.view.Gravity.BOTTOM, 0, 120)
-                    toast.show()
+                    ToastUtils.show(context, msg, success)
                     auditViewModel.clearScanZoneToast()
                 }
             }
@@ -162,14 +151,8 @@ fun NavGraph(
             var showCancelDialog by remember { mutableStateOf(false) }
 
             LaunchedEffect(locationToast) {
-                if (!locationToast.isNullOrBlank()) {
-                    val toast = android.widget.Toast.makeText(
-                        context,
-                        locationToast,
-                        android.widget.Toast.LENGTH_SHORT
-                    )
-                    toast.setGravity(android.view.Gravity.BOTTOM, 0, 120)
-                    toast.show()
+                locationToast?.takeIf { it.isNotBlank() }?.let { msg ->
+                    ToastUtils.show(context, msg, false)
                     auditViewModel.clearScanLocationToast()
                 }
             }
@@ -178,18 +161,7 @@ fun NavGraph(
                 addStagingToast?.let { pair ->
                     val success = pair.first
                     val msg = pair.second
-                    val toast = android.widget.Toast.makeText(
-                        context,
-                        msg,
-                        android.widget.Toast.LENGTH_SHORT
-                    )
-                    val bgHex = if (success) "#388E3C" else "#D32F2F"
-                    toast.view?.background =
-                        android.graphics.drawable.ColorDrawable(android.graphics.Color.parseColor(bgHex))
-                    val tv = toast.view?.findViewById<android.widget.TextView>(android.R.id.message)
-                    tv?.setTextColor(android.graphics.Color.WHITE)
-                    toast.setGravity(android.view.Gravity.BOTTOM, 0, 120)
-                    toast.show()
+                    ToastUtils.show(context, msg, success)
                     auditViewModel.clearAddStagingToast()
                 }
             }
@@ -257,18 +229,7 @@ fun NavGraph(
                         scope.launch {
                             val (ok, msg) = auditViewModel.submitAuditRemote(context, auditData.zoneId)
                             val text = if (msg.isNotBlank()) msg else if (ok) "Submitted successfully" else "Submit failed"
-                            val toast = android.widget.Toast.makeText(
-                                context,
-                                text,
-                                android.widget.Toast.LENGTH_SHORT
-                            )
-                            val bgHex = if (ok) "#388E3C" else "#D32F2F"
-                            toast.view?.background =
-                                android.graphics.drawable.ColorDrawable(android.graphics.Color.parseColor(bgHex))
-                            val tv = toast.view?.findViewById<android.widget.TextView>(android.R.id.message)
-                            tv?.setTextColor(android.graphics.Color.WHITE)
-                            toast.setGravity(android.view.Gravity.BOTTOM, 0, 120)
-                            toast.show()
+                            ToastUtils.show(context, text, ok)
                             if (ok) {
                                 navController.navigate(Screen.Success.route) {
                                     popUpTo(Screen.GlobalStockAudit.route) { inclusive = false }

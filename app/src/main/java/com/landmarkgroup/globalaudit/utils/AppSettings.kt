@@ -27,6 +27,8 @@ object AppSettings {
     private const val KEY_PROFILE_PICTURE_URL = "ProfilePictureUrl"
     private const val KEY_PERMISSIBLE_WAREHOUSES = "PermissibleWarehouses"
     private const val KEY_PERMISSIBLE_FACILITIES = "PermissibleFacilities"
+    // Persisted feature flag for enabling Global Stock Audit across app restarts
+    private const val KEY_GLOBAL_AUDIT_FLAG = "UI_FEATURE_GLOBAL_AUDIT_FACILITY_FLAG_ENABLED"
 
     private fun getSharedPreferences(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -139,7 +141,21 @@ object AppSettings {
             permissableFacilities = prefs.getStringSet(KEY_PERMISSIBLE_FACILITIES, emptySet())?.toList() ?: emptyList()
         )
     }
-
+    
+    // Persist/Load the Global Stock Audit feature flag
+    fun setGlobalAuditEnabled(context: Context, enabled: Boolean) {
+        val prefs = getSharedPreferences(context)
+        prefs.edit()
+            .putBoolean(KEY_GLOBAL_AUDIT_FLAG, enabled)
+            .apply()
+        Log.d(TAG, "Global Audit feature flag stored: $enabled")
+    }
+    
+    fun getGlobalAuditEnabled(context: Context): Boolean {
+        val prefs = getSharedPreferences(context)
+        return prefs.getBoolean(KEY_GLOBAL_AUDIT_FLAG, false)
+    }
+    
     fun clearAuthData(context: Context) {
         val prefs = getSharedPreferences(context)
         prefs.edit()
@@ -153,6 +169,7 @@ object AppSettings {
             .remove(KEY_PROFILE_PICTURE_URL)
             .remove(KEY_PERMISSIBLE_WAREHOUSES)
             .remove(KEY_PERMISSIBLE_FACILITIES)
+            .remove(KEY_GLOBAL_AUDIT_FLAG)
             .apply()
         Log.d(TAG, "Auth data cleared")
     }

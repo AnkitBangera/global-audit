@@ -24,7 +24,8 @@ import com.landmarkgroup.globalaudit.R
 import com.landmarkgroup.globalaudit.data.model.SharedAuthData
 import com.landmarkgroup.globalaudit.ui.utils.safeAreaPadding
 import androidx.compose.ui.platform.LocalContext
-import android.widget.Toast
+import com.landmarkgroup.globalaudit.ui.utils.ToastUtils
+import com.landmarkgroup.globalaudit.utils.AppSettings
 
 @Composable
 fun GlobalStockAuditScreen(
@@ -35,9 +36,11 @@ fun GlobalStockAuditScreen(
     val userName = authData?.usernameKey ?: "User"
     val context = LocalContext.current
     val features = SharedAuthData.getWarehouseFeatures()
+    // Fallback to persisted value so the tile stays enabled across app restarts before features are fetched again.
+    val persistedEnabled = AppSettings.getGlobalAuditEnabled(context)
     val isAuditEnabled = features?.any {
         it.featureName.equals("UI_FEATURE_GLOBAL_AUDIT_FACILITY_FLAG", ignoreCase = true) && it.featureEnabledValue
-    } ?: false
+    } ?: persistedEnabled
     
     Column(
         modifier = Modifier
@@ -87,7 +90,7 @@ fun GlobalStockAuditScreen(
                     if (isAuditEnabled) {
                         onGlobalStockAuditClick()
                     } else {
-                        Toast.makeText(context, "This feature is not available", Toast.LENGTH_SHORT).show()
+                        ToastUtils.show(context, "This feature is not available", false)
                     }
                 }
                 .alpha(if (isAuditEnabled) 1f else 0.6f),
