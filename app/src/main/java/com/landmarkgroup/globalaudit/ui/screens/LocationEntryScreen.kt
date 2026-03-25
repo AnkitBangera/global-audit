@@ -58,6 +58,15 @@ fun LocationEntryScreen(
     // Location is only "valid" once scan-location returns returnCode=Y.
     val isLocationValid = isLocationValidated
 
+    // Local state for location text field and debounce to avoid keyboard-wedge interference after DATA_INTENT
+    var localLocationId by remember { mutableStateOf(locationId) }
+    var lastDataIntentMs by remember { mutableStateOf(0L) }
+
+    // Keep local text in sync when ViewModel updates (e.g., after addBin/clear or when DI sets value)
+    LaunchedEffect(locationId) {
+        localLocationId = locationId
+    }
+
     // Register hardware scanner callback (Zebra/Honeywell). Trim scanned data and auto-validate.
     val context = LocalContext.current
     DisposableEffect(Unit) {
@@ -66,6 +75,9 @@ fun LocationEntryScreen(
             MainActivity.setScanResultCallback({ barcode ->
                 val scanned = barcode.trim()
                 if (scanned.isNotBlank()) {
+                    // Record DI timestamp and set local field, then update VM and trigger scan
+                    lastDataIntentMs = System.currentTimeMillis()
+                    localLocationId = scanned
                     onLocationIdChange(scanned)
                     onScanLocation()
                 }
@@ -165,13 +177,22 @@ fun LocationEntryScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         OutlinedTextField(
-                            value = locationId,
-                            onValueChange = { onLocationIdChange(it.replace(" ", "")) },
+                            value = localLocationId,
+                            onValueChange = { newValue ->
+                                val sanitized = newValue.replace(" ", "")
+                                val sinceDI = System.currentTimeMillis() - lastDataIntentMs
+                                // Accept keyboard input only if no recent DATA_INTENT scan
+                                if (sinceDI > 500L) {
+                                    localLocationId = sanitized
+                                }
+                            },
                             modifier = Modifier
                                 .weight(1f)
                                 .onPreviewKeyEvent { event ->
                                     if (event.type == KeyEventType.KeyDown && event.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_ENTER) {
-                                        if (locationId.isNotBlank()) {
+                                        val sinceDI = System.currentTimeMillis() - lastDataIntentMs
+                                        if (sinceDI > 500L && localLocationId.isNotBlank()) {
+                                            onLocationIdChange(localLocationId.trim())
                                             onScanLocation()
                                         }
                                         true
@@ -191,7 +212,9 @@ fun LocationEntryScreen(
                             ),
                             keyboardActions = KeyboardActions(
                                 onDone = {
-                                    if (locationId.isNotBlank()) {
+                                    val sinceDI = System.currentTimeMillis() - lastDataIntentMs
+                                    if (sinceDI > 500L && localLocationId.isNotBlank()) {
+                                        onLocationIdChange(localLocationId.trim())
                                         onScanLocation()
                                     }
                                 }
@@ -209,13 +232,16 @@ fun LocationEntryScreen(
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
-                                    if (locationId.isNotBlank()) {
+                                    if (localLocationId.isNotBlank()) {
                                         Icon(
                                             imageVector = Icons.Default.Close,
                                             contentDescription = "Clear",
                                             modifier = Modifier
                                                 .size(20.dp)
-                                                .clickable { onLocationIdChange("") },
+                                                .clickable {
+                                                    localLocationId = ""
+                                                    onLocationIdChange("")
+                                                },
                                             tint = Color(0xFF666666)
                                         )
                                     }

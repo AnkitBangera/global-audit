@@ -77,19 +77,22 @@ class MainActivity : ComponentActivity() {
 
                     // Honeywell (primary action for our app package)
                     "com.landmarkgroup.globalaudit.HONEYWELL_BARCODE_DATA" -> {
-                        val version = intent.getIntExtra("version", 0)
-                        if (version >= 1) {
-                            val data = intent.getStringExtra("data") ?: ""
-                            val aimId = intent.getStringExtra("aimId") ?: ""
-                            val codeId = intent.getStringExtra("codeId") ?: ""
-                            val charset = intent.getStringExtra("charset") ?: ""
-                            val timestamp = intent.getStringExtra("timestamp") ?: ""
-                            resultInfo = data.trim()
-                            Log.d(
-                                "MainActivity",
-                                "Honeywell scan - Data: $data, AimId: $aimId, CodeId: $codeId, Charset: $charset, Timestamp: $timestamp"
-                            )
-                        }
+                        // Default version to 1 if not provided by firmware
+                        val version = intent.getIntExtra("version", 1)
+                        // Try multiple extras to be robust across firmware variants
+                        val dataRaw = intent.getStringExtra("data")
+                            ?: intent.getStringExtra("com.honeywell.aidc.extra.BARCODE_DATA")
+                            ?: intent.getStringExtra("barcode_data")
+                            ?: ""
+                        val aimId = intent.getStringExtra("aimId") ?: ""
+                        val codeId = intent.getStringExtra("codeId") ?: ""
+                        val charset = intent.getStringExtra("charset") ?: ""
+                        val timestamp = intent.getStringExtra("timestamp") ?: ""
+                        resultInfo = dataRaw.trim()
+                        Log.d(
+                            "MainActivity",
+                            "Honeywell scan - Data: $dataRaw, AimId: $aimId, CodeId: $codeId, Charset: $charset, Timestamp: $timestamp, Version: $version"
+                        )
                     }
 
                     // Honeywell AIDC variants
@@ -329,22 +332,35 @@ class MainActivity : ComponentActivity() {
     private fun configureHoneywellScanner() {
         try {
             val properties = OsBundle().apply {
+                // Ensure barcode data is delivered via broadcast intent
                 putBoolean("DPR_DATA_INTENT", true)
-                putString(
-                    "DPR_DATA_INTENT_ACTION",
-                    "com.landmarkgroup.globalaudit.HONEYWELL_BARCODE_DATA"
-                )
+                putString("DPR_DATA_INTENT_ACTION", "com.landmarkgroup.globalaudit.HONEYWELL_BARCODE_DATA")
+
+                // Attempt to raise/override max length for common symbologies to avoid 26-char truncation
+                // (Unsupported keys are ignored by the scanner service)
+                putString("DEC_CODE39_MAX_LENGTH", "100")
+                putString("DEC_CODE128_MAX_LENGTH", "100")
+                putString("DEC_QR_MAX_LENGTH", "100")
+                putString("DEC_PDF417_MAX_LENGTH", "300")
+                putString("DEC_DATAMATRIX_MAX_LENGTH", "300")
+                putString("DEC_EAN13_MAX_LENGTH", "50")
+                putString("DEC_EAN8_MAX_LENGTH", "50")
+                putString("DEC_UPCA_MAX_LENGTH", "50")
+                putString("DEC_UPCE0_MAX_LENGTH", "50")
+                putString("DEC_UPCE1_MAX_LENGTH", "50")
+                putString("DEC_INTERLEAVED_2OF5_MAX_LENGTH", "100")
             }
 
             val claimIntent = Intent().apply {
                 action = "com.honeywell.aidc.action.ACTION_CLAIM_SCANNER"
+                // Keep default imager; if device does not support this identifier it will be ignored
                 putExtra("com.honeywell.aidc.extra.EXTRA_SCANNER", "dcs.scanner.imager")
                 putExtra("com.honeywell.aidc.extra.EXTRA_PROFILE", "DEFAULT")
                 putExtra("com.honeywell.aidc.extra.EXTRA_PROPERTIES", properties)
             }
 
             sendBroadcast(claimIntent)
-            Log.d("MainActivity", "Honeywell scanner claim intent sent")
+            Log.d("MainActivity", "Honeywell scanner claim intent sent with extended properties for max-length overrides")
         } catch (e: Exception) {
             Log.e("MainActivity", "Failed to configure Honeywell scanner: ${e.message}")
         }
