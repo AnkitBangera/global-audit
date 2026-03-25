@@ -245,9 +245,11 @@ fun NavGraph(
                     onConfirmCancel = {
                         auditViewModel.launchClearAuditRemote(context, auditData.zoneId)
                         auditViewModel.clearAudit()
+                        // Preserve the current zone so user returns to Scan Location for the same zone
+                        auditViewModel.setZoneId(auditData.zoneId)
                         showCancelDialog = false
-                        navController.navigate(Screen.ZoneSelection.route) {
-                            popUpTo(Screen.ZoneSelection.route) { inclusive = true }
+                        navController.navigate(Screen.LocationEntry.route) {
+                            popUpTo(Screen.LocationEntry.route) { inclusive = true }
                         }
                     }
                 )
@@ -264,8 +266,9 @@ fun NavGraph(
                     binCount = auditData.bins.map { it.locationId }.distinct().size,
                     onBackToDashboard = {
                         auditViewModel.clearAudit()
-                        navController.navigate(Screen.GlobalStockAudit.route) {
-                            popUpTo(Screen.GlobalStockAudit.route) { inclusive = true }
+                        navController.navigate(Screen.ZoneSelection.route) {
+                            // Keep Global dashboard in back stack; return to Scan Zone for next cycle
+                            popUpTo(Screen.GlobalStockAudit.route) { inclusive = false }
                         }
                     }
                 )
