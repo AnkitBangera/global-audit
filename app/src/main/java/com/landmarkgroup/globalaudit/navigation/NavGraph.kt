@@ -17,6 +17,7 @@ import com.landmarkgroup.globalaudit.ui.screens.*
 import com.landmarkgroup.globalaudit.ui.viewmodel.AuditViewModel
 import com.landmarkgroup.globalaudit.ui.viewmodel.LoginViewModel
 import com.landmarkgroup.globalaudit.ui.utils.ToastUtils
+import androidx.activity.compose.BackHandler
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -149,6 +150,7 @@ fun NavGraph(
             val context = androidx.compose.ui.platform.LocalContext.current
             
             var showCancelDialog by remember { mutableStateOf(false) }
+            BackHandler { showCancelDialog = true }
 
             LaunchedEffect(locationToast) {
                 locationToast?.takeIf { it.isNotBlank() }?.let { msg ->
@@ -219,6 +221,7 @@ fun NavGraph(
                 val scope = rememberCoroutineScope()
                 val context = androidx.compose.ui.platform.LocalContext.current
                 var showCancelDialog by remember { mutableStateOf(false) }
+                BackHandler { showCancelDialog = true }
                 
                 SummaryScreen(
                     auditData = auditData,
