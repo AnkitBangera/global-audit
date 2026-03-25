@@ -2,7 +2,33 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    kotlin("kapt")
+    alias(libs.plugins.ksp)
+}
+
+configurations.all {
+    resolutionStrategy {
+        // Force patched transitive versions for security (addresses Snyk findings)
+        // Netty family
+        force("io.netty:netty-common:4.1.129.Final")
+        force("io.netty:netty-codec-http:4.1.129.Final")
+        force("io.netty:netty-codec-http2:4.1.129.Final")
+        force("io.netty:netty-handler:4.1.129.Final")
+        force("io.netty:netty-buffer:4.1.129.Final")
+        force("io.netty:netty-transport:4.1.129.Final")
+
+        // Protobuf
+        force("com.google.protobuf:protobuf-java:3.25.5")
+        force("com.google.protobuf:protobuf-java-util:3.25.5")
+
+        // Guava (Android variant)
+        force("com.google.guava:guava:33.4.0-android")
+
+        // Kotlin stdlib alignment to avoid older vulnerable stdlib in transitive deps
+        force("org.jetbrains.kotlin:kotlin-stdlib:2.1.20")
+        force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.20")
+        force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.20")
+        force("org.jetbrains.kotlin:kotlin-stdlib-common:2.1.20")
+    }
 }
 
 android {
@@ -67,7 +93,7 @@ dependencies {
     // Moshi for JSON parsing
     implementation("com.squareup.moshi:moshi:1.15.1")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
+    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
     
     // Retrofit for API calls
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
