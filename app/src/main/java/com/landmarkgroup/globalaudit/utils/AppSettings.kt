@@ -3,6 +3,8 @@ package com.landmarkgroup.globalaudit.utils
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import com.landmarkgroup.globalaudit.data.model.AuthData
 
 /**
@@ -27,11 +29,26 @@ object AppSettings {
     private const val KEY_PROFILE_PICTURE_URL = "ProfilePictureUrl"
     private const val KEY_PERMISSIBLE_WAREHOUSES = "PermissibleWarehouses"
     private const val KEY_PERMISSIBLE_FACILITIES = "PermissibleFacilities"
+    private const val KEY_REFRESH_TOKEN = "RefreshToken"
     // Persisted feature flag for enabling Global Stock Audit across app restarts
     private const val KEY_GLOBAL_AUDIT_FLAG = "UI_FEATURE_GLOBAL_AUDIT_FACILITY_FLAG_ENABLED"
 
     private fun getSharedPreferences(context: Context): SharedPreferences {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return try {
+            val masterKey = MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+            EncryptedSharedPreferences.create(
+                context,
+                PREFS_NAME,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            // Fallback to regular SharedPreferences if encrypted prefs are not available
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        }
     }
 
     /**
@@ -110,6 +127,7 @@ object AppSettings {
             .putString(KEY_PROFILE_PICTURE_URL, authData.profilePictureUrl)
             .putStringSet(KEY_PERMISSIBLE_WAREHOUSES, authData.permissableWarehouses.toSet())
             .putStringSet(KEY_PERMISSIBLE_FACILITIES, authData.permissableFacilities.toSet())
+            .putString(KEY_REFRESH_TOKEN, authData.refreshTokenKey)
             .apply()
 
         Log.d(TAG, "Auth data saved (expiresOn=${authData.expiresOnKey}, selectedFacility=${authData.selectedFacilityKey})")
@@ -138,7 +156,8 @@ object AppSettings {
             employeeIdKey = employeeId,
             profilePictureUrl = prefs.getString(KEY_PROFILE_PICTURE_URL, null),
             permissableWarehouses = prefs.getStringSet(KEY_PERMISSIBLE_WAREHOUSES, emptySet())?.toList() ?: emptyList(),
-            permissableFacilities = prefs.getStringSet(KEY_PERMISSIBLE_FACILITIES, emptySet())?.toList() ?: emptyList()
+            permissableFacilities = prefs.getStringSet(KEY_PERMISSIBLE_FACILITIES, emptySet())?.toList() ?: emptyList(),
+            refreshTokenKey = prefs.getString(KEY_REFRESH_TOKEN, null)
         )
     }
     
@@ -169,6 +188,7 @@ object AppSettings {
             .remove(KEY_PROFILE_PICTURE_URL)
             .remove(KEY_PERMISSIBLE_WAREHOUSES)
             .remove(KEY_PERMISSIBLE_FACILITIES)
+            .remove(KEY_REFRESH_TOKEN)
             .remove(KEY_GLOBAL_AUDIT_FLAG)
             .apply()
         Log.d(TAG, "Auth data cleared")

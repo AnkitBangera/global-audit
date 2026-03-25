@@ -10,5 +10,7 @@ data class AuthData(
     var employeeIdKey: String? = null,
     var profilePictureUrl: String? = null,
     var permissableWarehouses: List<String> = emptyList(),
-    var permissableFacilities: List<String> = emptyList()
+    var permissableFacilities: List<String> = emptyList(),
+    // Refresh token for silent re-authentication via AppAuth
+    var refreshTokenKey: String? = null
 )

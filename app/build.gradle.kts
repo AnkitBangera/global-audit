@@ -65,6 +65,7 @@ android {
         jvmTarget = "11"
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 }
@@ -86,6 +87,8 @@ dependencies {
     // AppAuth for ADFS/OAuth2 login
     implementation("net.openid:appauth:0.11.1")
     implementation("androidx.browser:browser:1.7.0")
+    // Encrypted SharedPreferences for secure token storage
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
     
     // JWT decoding
     implementation("com.auth0.android:jwtdecode:2.0.2")

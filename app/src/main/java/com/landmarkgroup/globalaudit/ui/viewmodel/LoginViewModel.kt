@@ -40,6 +40,10 @@ class LoginViewModel(
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val uiState: StateFlow<LoginUiState> = _uiState
 
+    // Emits true when a hard session failure occurs (e.g., refresh failed)
+    private val _sessionExpired = MutableStateFlow(false)
+    val sessionExpired: StateFlow<Boolean> = _sessionExpired
+
     private var lastAuthRequest: AuthorizationRequest? = null
     private lateinit var serviceConfig: AuthorizationServiceConfiguration
 
@@ -122,6 +126,7 @@ class LoginViewModel(
                 val accessToken = tokenResponse.accessToken
                 val idToken = tokenResponse.idToken
                 val expiresOn = tokenResponse.accessTokenExpirationTime ?: 0L
+                val refreshToken = tokenResponse.refreshToken
 
                 Log.d("LoginViewModel", "ADFS Login successful - Access Token: $accessToken")
                 Log.d("LoginViewModel", "ADFS Login successful - ID Token: $idToken")
@@ -160,6 +165,8 @@ class LoginViewModel(
                     }
                     // Keep existing profilePictureUrl if already set
                 }
+                // Persist refresh token if provided (keep existing if not returned)
+                sharedAuthData.refreshTokenKey = refreshToken ?: sharedAuthData.refreshTokenKey
                 SharedAuthData.setAuthData(sharedAuthData)
                 AppSettings.saveAuthData(appContext, sharedAuthData)
 
@@ -264,6 +271,44 @@ class LoginViewModel(
                 // Non-blocking: proceed to app even if this call fails
             }
             _uiState.value = LoginUiState.NavigateToMainApp
+        }
+    }
+
+    /**
+     * Perform silent token refresh using stored refresh token (AppAuth).
+     * On success: updates tokens and expiry in SharedAuthData/AppSettings.
+     * On failure: sets sessionExpired=true to trigger navigation to Login.
+     */
+    fun silentRefreshToken() {
+        val current = SharedAuthData.getAuthData()
+        val storedRefresh = current?.refreshTokenKey
+        if (storedRefresh.isNullOrBlank()) {
+            return
+        }
+        val refreshRequest = TokenRequest.Builder(
+            serviceConfig,
+            AuthConstants.ADFS_CLIENT_ID
+        )
+            .setGrantType(GrantTypeValues.REFRESH_TOKEN)
+            .setRefreshToken(storedRefresh)
+            .build()
+
+        authService.performTokenRequest(refreshRequest) { tokenResponse, ex ->
+            if (tokenResponse != null) {
+                val auth = SharedAuthData.getAuthData()
+                auth?.accessTokenKey = tokenResponse.accessToken
+                auth?.idTokenKey = tokenResponse.idToken
+                auth?.expiresOnKey = tokenResponse.accessTokenExpirationTime ?: 0L
+                // Some IdPs rotate refresh tokens; keep the new one if present
+                auth?.refreshTokenKey = tokenResponse.refreshToken ?: auth?.refreshTokenKey
+                if (auth != null) {
+                    SharedAuthData.setAuthData(auth)
+                    AppSettings.saveAuthData(appContext, auth)
+                }
+            } else {
+                // Hard failure - force re-login
+                _sessionExpired.value = true
+            }
         }
     }
 

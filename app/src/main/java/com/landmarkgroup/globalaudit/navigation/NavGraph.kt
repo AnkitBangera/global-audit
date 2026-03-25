@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -35,6 +36,9 @@ fun NavGraph(
     auditViewModel: AuditViewModel,
     loginViewModel: LoginViewModel
 ) {
+    // Observe session expiry
+    val sessionExpired by loginViewModel.sessionExpired.collectAsState()
+
     // Check auth state on startup
     LaunchedEffect(Unit) {
         val authData = SharedAuthData.getAuthData()
@@ -55,6 +59,29 @@ fun NavGraph(
         }
     }
     
+    // React to hard session expiry (e.g., refresh failure)
+    LaunchedEffect(sessionExpired) {
+        if (sessionExpired) {
+            navController.navigate(Screen.Login.route) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
+    // Periodically refresh tokens silently when nearing expiry
+    LaunchedEffect("tokenRefresh") {
+        while (true) {
+            val authData = SharedAuthData.getAuthData()
+            if (authData != null && authData.expiresOnKey > 0L) {
+                val millisLeft = authData.expiresOnKey - System.currentTimeMillis()
+                if (millisLeft in 1..600_000) { // &lt; 10 minutes
+                    loginViewModel.silentRefreshToken()
+                }
+            }
+            delay(300_000) // 5 minutes
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = Screen.Login.route

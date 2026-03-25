@@ -1,6 +1,7 @@
 package com.landmarkgroup.globalaudit.network
 
 import com.landmarkgroup.globalaudit.utils.Constants
+import com.landmarkgroup.globalaudit.BuildConfig
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.OkHttpClient
@@ -20,8 +21,11 @@ object NetworkModule {
 
     private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(AuthInterceptor())
-        .addInterceptor(CurlLoggingInterceptor())
-        .addInterceptor(loggingInterceptor)
+        .apply {
+            if (BuildConfig.DEBUG) {
+                addInterceptor(loggingInterceptor)
+            }
+        }
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
