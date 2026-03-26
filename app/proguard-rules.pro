@@ -1,21 +1,49 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ProGuard/R8 rules for Global Audit app
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Keep annotations and signatures required by Retrofit/Moshi/AppAuth
+-keepattributes Signature, InnerClasses, EnclosingMethod, *Annotation*
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Kotlin metadata
+-keep class kotlin.Metadata { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# ---- Retrofit / OkHttp / Okio ----
+# Keep Retrofit core (interfaces and generated code)
+-keep class retrofit2.** { *; }
+-dontwarn retrofit2.**
+
+# Keep OkHttp/Okio to avoid stripping required internals
+-keep class okhttp3.** { *; }
+-keep class okio.** { *; }
+-dontwarn okhttp3.**
+-dontwarn okio.**
+
+# ---- Moshi JSON ----
+# Keep Moshi core and adapters
+-keep class com.squareup.moshi.** { *; }
+-dontwarn com.squareup.moshi.**
+
+# If using Moshi code gen with @JsonClass(generateAdapter = true), keep those models
+-keep @com.squareup.moshi.JsonClass class ** { *; }
+
+# Keep fields annotated with @Json so Moshi can access them
+-keepclassmembers class ** {
+    @com.squareup.moshi.Json <fields>;
+}
+
+# ---- AppAuth (OIDC/OAuth2) ----
+-keep class net.openid.appauth.** { *; }
+-dontwarn net.openid.appauth.**
+
+# ---- JWT decoder ----
+-keep class com.auth0.android.jwt.** { *; }
+
+# ---- AndroidX Security Crypto (EncryptedSharedPreferences) ----
+-keep class androidx.security.** { *; }
+-dontwarn androidx.security.**
+
+# ---- General Android keeps (optional, safe) ----
+# Keep enum values to avoid reflection issues
+-keepclassmembers enum * { **[] values(); ** valueOf(java.lang.String); }
+
+# You can uncomment for debugging ProGuard issues
+# -whyareyoukeeping class com.yourpackage.**

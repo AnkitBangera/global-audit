@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import com.landmarkgroup.globalaudit.BuildConfig
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.landmarkgroup.globalaudit.data.model.AuthData
@@ -78,7 +79,9 @@ class LoginViewModel(
         try {
             val currentDeviceId = DeviceUtils.getDeviceId(appContext)
             AppSettings.setDeviceId(appContext, currentDeviceId)
-            Log.d("LoginViewModel", "Device ID initialized: $currentDeviceId")
+            if (BuildConfig.DEBUG) {
+                Log.d("LoginViewModel", "Device ID initialized: $currentDeviceId")
+            }
         } catch (e: Exception) {
             Log.e("LoginViewModel", "Error initializing device ID", e)
         }
@@ -111,7 +114,9 @@ class LoginViewModel(
     }
 
     fun handleAuthCode(authCode: String) {
-        Log.d("LoginViewModel", "Received authorization code: $authCode")
+        if (BuildConfig.DEBUG) {
+            Log.d("LoginViewModel", "Received authorization code: $authCode")
+        }
         val tokenRequest = TokenRequest.Builder(
             serviceConfig,
             AuthConstants.ADFS_CLIENT_ID
@@ -128,11 +133,19 @@ class LoginViewModel(
                 val expiresOn = tokenResponse.accessTokenExpirationTime ?: 0L
                 val refreshToken = tokenResponse.refreshToken
 
-                Log.d("LoginViewModel", "ADFS Login successful - Access Token: $accessToken")
-                Log.d("LoginViewModel", "ADFS Login successful - ID Token: $idToken")
-                Log.d("UserImageURL", "Starting profile image URL construction in LoginViewModel")
+                if (BuildConfig.DEBUG) {
+                    Log.d("LoginViewModel", "ADFS Login successful - Access Token: $accessToken")
+                }
+                if (BuildConfig.DEBUG) {
+                    Log.d("LoginViewModel", "ADFS Login successful - ID Token: $idToken")
+                }
+                if (BuildConfig.DEBUG) {
+                    Log.d("UserImageURL", "Starting profile image URL construction in LoginViewModel")
+                }
                 val userId = JwtUtils.extractUserId(idToken)
-                Log.d("UserImageURL", "Extracted userId for profile image: $userId")
+                if (BuildConfig.DEBUG) {
+                    Log.d("UserImageURL", "Extracted userId for profile image: $userId")
+                }
                 // TODO: Implement profile image URL if needed
                 // val profileImageUrl = Constants.getUserImageUrl(userId)
                 

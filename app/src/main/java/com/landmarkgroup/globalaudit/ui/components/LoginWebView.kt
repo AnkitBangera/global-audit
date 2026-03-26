@@ -10,6 +10,7 @@ import android.webkit.WebViewClient
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.viewinterop.AndroidView
 import com.landmarkgroup.globalaudit.utils.AuthConstants
+import com.landmarkgroup.globalaudit.BuildConfig
 
 @Composable
 fun LoginWebView(
@@ -68,18 +69,24 @@ fun LoginWebView(
 
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url?.toString() ?: return false
-                    Log.d("LoginWebView", "shouldOverrideUrlLoading: Intercepted URL: $url")
+                    if (BuildConfig.DEBUG) {
+                        Log.d("LoginWebView", "shouldOverrideUrlLoading: Intercepted URL: $url")
+                    }
 
                     val uri = Uri.parse(url)
                     if (uri.scheme == AuthConstants.REDIRECT_URI.scheme && uri.host == AuthConstants.REDIRECT_URI.host) {
-                        Log.d("LoginWebView", "Redirect URI detected: $url")
+                        if (BuildConfig.DEBUG) {
+                            Log.d("LoginWebView", "Redirect URI detected: $url")
+                        }
                         val authCode = uri.getQueryParameter("code")
                         val error = uri.getQueryParameter("error")
                         val errorDescription = uri.getQueryParameter("error_description")
 
                         when {
                             authCode != null -> {
-                                Log.d("LoginWebView", "Auth code found: $authCode")
+                                if (BuildConfig.DEBUG) {
+                                    Log.d("LoginWebView", "Auth code found: $authCode")
+                                }
                                 onAuthCodeReceived(authCode)
                                 return true
                             }

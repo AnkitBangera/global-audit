@@ -3,6 +3,7 @@ package com.landmarkgroup.globalaudit.utils
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import com.landmarkgroup.globalaudit.BuildConfig
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.landmarkgroup.globalaudit.data.model.AuthData
@@ -66,9 +67,13 @@ object AppSettings {
             // Device ID not stored yet, get it from device and save it
             deviceId = DeviceUtils.getDeviceId(context)
             setDeviceId(context, deviceId)
-            Log.d(TAG, "Device ID initialized and stored: $deviceId")
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Device ID initialized and stored: $deviceId")
+            }
         } else {
-            Log.d(TAG, "Device ID retrieved from storage: $deviceId")
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Device ID retrieved from storage: $deviceId")
+            }
         }
         
         return deviceId
@@ -85,7 +90,9 @@ object AppSettings {
         prefs.edit()
             .putString(KEY_DEVICE_ID, deviceId)
             .apply()
-        Log.d(TAG, "Device ID stored: $deviceId")
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Device ID stored: $deviceId")
+        }
     }
 
     /**
@@ -99,7 +106,9 @@ object AppSettings {
         prefs.edit()
             .remove(KEY_DEVICE_ID)
             .apply()
-        Log.d(TAG, "Device ID cleared")
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Device ID cleared")
+        }
     }
 
     /**
@@ -130,7 +139,9 @@ object AppSettings {
             .putString(KEY_REFRESH_TOKEN, authData.refreshTokenKey)
             .apply()
 
-        Log.d(TAG, "Auth data saved (expiresOn=${authData.expiresOnKey}, selectedFacility=${authData.selectedFacilityKey})")
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Auth data saved (expiresOn=${authData.expiresOnKey}, selectedFacility=${authData.selectedFacilityKey})")
+        }
     }
 
     fun loadAuthData(context: Context): AuthData? {
@@ -167,7 +178,9 @@ object AppSettings {
         prefs.edit()
             .putBoolean(KEY_GLOBAL_AUDIT_FLAG, enabled)
             .apply()
-        Log.d(TAG, "Global Audit feature flag stored: $enabled")
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Global Audit feature flag stored: $enabled")
+        }
     }
     
     fun getGlobalAuditEnabled(context: Context): Boolean {
@@ -191,6 +204,8 @@ object AppSettings {
             .remove(KEY_REFRESH_TOKEN)
             .remove(KEY_GLOBAL_AUDIT_FLAG)
             .apply()
-        Log.d(TAG, "Auth data cleared")
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Auth data cleared")
+        }
     }
 }

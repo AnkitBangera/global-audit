@@ -2,6 +2,7 @@ package com.landmarkgroup.globalaudit.utils
 
 import android.util.Log
 import com.auth0.android.jwt.JWT
+import com.landmarkgroup.globalaudit.BuildConfig
 
 object JwtUtils {
 
@@ -17,7 +18,9 @@ object JwtUtils {
                 Log.w("JwtUtils", "Claim '$key' is missing or empty in the JWT.")
                 return null
             }
-            Log.d("JwtUtils", "Extracted $key: $claimValue")
+            if (BuildConfig.DEBUG) {
+                Log.d("JwtUtils", "Extracted $key: $claimValue")
+            }
             return claimValue
         } catch (e: Exception) {
             Log.e("JwtUtils", "Error decoding JWT or extracting $key: ${e.message}", e)
@@ -26,7 +29,9 @@ object JwtUtils {
     }
 
     fun extractUserId(token: String?): String? {
-        Log.d("UserImageURL", "extractUserId called with token: ${if (token.isNullOrBlank()) "null/blank" else "present"}")
+        if (BuildConfig.DEBUG) {
+            Log.d("UserImageURL", "extractUserId called with token: ${if (token.isNullOrBlank()) "null/blank" else "present"}")
+        }
 
         if (token.isNullOrBlank()) {
             Log.w("UserImageURL", "Token is null or blank, cannot extract user ID")
@@ -43,15 +48,21 @@ object JwtUtils {
             "sAMAccountName"
         )
 
-        Log.d("UserImageURL", "Trying to extract user ID from claims: $possibleUserIdClaims")
+        if (BuildConfig.DEBUG) {
+            Log.d("UserImageURL", "Trying to extract user ID from claims: $possibleUserIdClaims")
+        }
 
         for (claimName in possibleUserIdClaims) {
             val userId = extractForKey(token, claimName)
             if (!userId.isNullOrBlank()) {
-                Log.d("UserImageURL", "Successfully extracted User ID from claim '$claimName': $userId")
+                if (BuildConfig.DEBUG) {
+                    Log.d("UserImageURL", "Successfully extracted User ID from claim '$claimName': $userId")
+                }
                 return userId
             } else {
-                Log.d("UserImageURL", "Claim '$claimName' is null or blank")
+                if (BuildConfig.DEBUG) {
+                    Log.d("UserImageURL", "Claim '$claimName' is null or blank")
+                }
             }
         }
 
