@@ -35,21 +35,16 @@ object AppSettings {
     private const val KEY_GLOBAL_AUDIT_FLAG = "UI_FEATURE_GLOBAL_AUDIT_FACILITY_FLAG_ENABLED"
 
     private fun getSharedPreferences(context: Context): SharedPreferences {
-        return try {
-            val masterKey = MasterKey.Builder(context)
-                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                .build()
-            EncryptedSharedPreferences.create(
-                context,
-                PREFS_NAME,
-                masterKey,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            )
-        } catch (e: Exception) {
-            // Fallback to regular SharedPreferences if encrypted prefs are not available
-            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        }
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+        return EncryptedSharedPreferences.create(
+            context,
+            PREFS_NAME,
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
     }
 
     /**
