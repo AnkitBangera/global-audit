@@ -166,10 +166,7 @@ fun NavGraph(
             val zoneId by auditViewModel.currentZoneId.collectAsState()
             val locationId by auditViewModel.currentLocationId.collectAsState()
             val quantity by auditViewModel.currentQuantity.collectAsState()
-            val binCount = auditData?.bins
-                ?.map { it.locationId }
-                ?.distinct()
-                ?.size ?: 0
+            val binCount = auditData?.bins?.size ?: 0
             val isLocationValidated by auditViewModel.isLocationValidated.collectAsState()
             val locationToast by auditViewModel.scanLocationToast.collectAsState()
             val addStagingToast by auditViewModel.addStagingToast.collectAsState()
