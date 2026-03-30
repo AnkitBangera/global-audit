@@ -25,6 +25,10 @@ import com.landmarkgroup.globalaudit.ui.viewmodel.AuditViewModel
 import com.landmarkgroup.globalaudit.ui.viewmodel.LoginViewModel
 import com.landmarkgroup.globalaudit.utils.AuthConstants
 import android.os.Bundle as OsBundle
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.analytics.logEvent
+import com.google.firebase.ktx.Firebase
+import com.landmarkgroup.globalaudit.BuildConfig
 
 class MainActivity : ComponentActivity() {
 
@@ -139,6 +143,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (BuildConfig.DEBUG) {
+            Firebase.analytics.logEvent("debug_app_open") {
+                param("source", "MainActivity")
+            }
+        }
 
         // Handle redirect URI from ADFS
         handleAuthRedirect(intent)

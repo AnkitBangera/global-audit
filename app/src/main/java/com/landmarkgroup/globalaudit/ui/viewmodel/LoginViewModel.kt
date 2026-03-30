@@ -19,6 +19,10 @@ import com.landmarkgroup.globalaudit.utils.JwtUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.analytics.logEvent
+import com.google.firebase.crashlytics.ktx.crashlytics
+import com.google.firebase.ktx.Firebase
 import net.openid.appauth.*
 
 sealed class LoginUiState {
@@ -56,6 +60,7 @@ class LoginViewModel(
         val cachedAuth = AppSettings.loadAuthData(appContext)
         if (cachedAuth != null) {
             SharedAuthData.setAuthData(cachedAuth)
+            cachedAuth.employeeIdKey?.let { Firebase.crashlytics.setUserId(it) }
         }
 
         // If session is still valid, skip ADFS and go straight into the app
@@ -89,6 +94,7 @@ class LoginViewModel(
 
     fun initiateLogin() {
         _uiState.value = LoginUiState.AdfsLoginInProgress
+        Firebase.analytics.logEvent("login_begin") { }
         val authRequest = AuthorizationRequest.Builder(
             serviceConfig,
             AuthConstants.ADFS_CLIENT_ID,
@@ -184,12 +190,21 @@ class LoginViewModel(
                 AppSettings.saveAuthData(appContext, sharedAuthData)
 
                 if (accessToken != null && idToken != null) {
+                    // Crashlytics user association and Analytics success event
+                    Firebase.crashlytics.setUserId(empIdFromJwt ?: userId ?: "")
+                    Firebase.analytics.logEvent("adfs_token_exchange_success") {
+                        param("has_refresh", if (refreshToken != null) "1" else "0")
+                    }
                     authorizeWithBackend()
                 } else {
+                    Firebase.analytics.logEvent("adfs_token_exchange_failure") { }
+                    Firebase.crashlytics.log("Missing access token or ID token after token exchange")
                     handleAuthFlowError("Missing access token or ID token")
                 }
             } else {
                 Log.e("LoginViewModel", "Token exchange failed", ex)
+                Firebase.analytics.logEvent("adfs_token_exchange_failure") { }
+                Firebase.crashlytics.recordException(ex ?: Exception("Token exchange failed"))
                 handleAuthFlowError("Token exchange failed: ${ex?.errorDescription}")
             }
         }
@@ -220,6 +235,9 @@ class LoginViewModel(
                     }
                 }
                 
+                Firebase.analytics.logEvent("backend_authorize_success") {
+                    param("facility_count", (facilities?.size ?: 0).toString())
+                }
                 if (authorizationResponse.id != null && !facilities.isNullOrEmpty()) {
                     if (facilities.size == 1) {
                         val facilityName = UserFacility.fromId(facilities.first())?.name ?: facilities.first()
@@ -251,6 +269,8 @@ class LoginViewModel(
                         "Could not verify user with backend: ${e.message}"
                     }
                 }
+                Firebase.analytics.logEvent("backend_authorize_error") { }
+                Firebase.crashlytics.recordException(e)
                 handleAuthFlowError(errorMessage)
             }
         }
@@ -263,6 +283,10 @@ class LoginViewModel(
             sharedAuthData?.warehouseCodeKey = UserFacility.fromName(facility)?.id ?: ""
             if (sharedAuthData != null) {
                 AppSettings.saveAuthData(appContext, sharedAuthData)
+            }
+            Firebase.crashlytics.setCustomKey("selected_facility", facility)
+            Firebase.analytics.logEvent("facility_selected") {
+                param("facility", facility)
             }
             // Fire and store warehouse feature flags for the selected facility (numeric id like 1001000 for BU)
             try {
@@ -320,6 +344,8 @@ class LoginViewModel(
                 }
             } else {
                 // Hard failure - force re-login
+                Firebase.analytics.logEvent("refresh_token_failed") { }
+                Firebase.crashlytics.log("Silent refresh token failed")
                 _sessionExpired.value = true
             }
         }
@@ -333,6 +359,10 @@ class LoginViewModel(
     
     fun handleAuthFlowError(message: String) {
         Log.e("LoginViewModel", "Auth Flow Error: $message")
+        Firebase.analytics.logEvent("auth_flow_error") {
+            param("message", message.take(100))
+        }
+        Firebase.crashlytics.log("Auth Flow Error: $message")
         SharedAuthData.clearAuthData()
         AppSettings.clearAuthData(appContext)
         _uiState.value = LoginUiState.Error(message)

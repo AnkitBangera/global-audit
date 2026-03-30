@@ -47,3 +47,10 @@
 
 # You can uncomment for debugging ProGuard issues
 # -whyareyoukeeping class com.yourpackage.**
+
+# ---- Firebase Crashlytics ----
+# Keep source file and line number info for better deobfuscation in Crashlytics
+-keepattributes SourceFile,LineNumberTable
+
+# Keep custom exception types (helps retain meaningful class names for exceptions)
+-keep public class * extends java.lang.Exception

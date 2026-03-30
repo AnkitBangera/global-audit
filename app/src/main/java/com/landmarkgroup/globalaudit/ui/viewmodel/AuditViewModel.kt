@@ -18,6 +18,10 @@ import com.landmarkgroup.globalaudit.utils.DeviceUtils
 import com.landmarkgroup.globalaudit.utils.JwtUtils
 import com.landmarkgroup.globalaudit.utils.AppSettings
 import android.content.Context
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.analytics.logEvent
+import com.google.firebase.crashlytics.ktx.crashlytics
+import com.google.firebase.ktx.Firebase
 
 class AuditViewModel : ViewModel() {
     private val _auditData = MutableStateFlow<AuditData?>(null)
@@ -82,6 +86,15 @@ class AuditViewModel : ViewModel() {
                 if (!success) {
                     _scanZoneError.value = finalMessage
                 }
+                // Analytics: log scan zone result
+                Firebase.analytics.logEvent("scan_zone_result") {
+                    param("zone_id", zoneId)
+                    param("success", if (success) "1" else "0")
+                }
+                if (!success) {
+                    Firebase.crashlytics.setCustomKey("zone_id", zoneId)
+                    Firebase.crashlytics.log("scanZone failed: $finalMessage")
+                }
                 success
             } else {
                 val msg = "Scan zone failed"
@@ -93,6 +106,8 @@ class AuditViewModel : ViewModel() {
             val msg = e.message ?: "Unknown error"
             _scanZoneError.value = msg
             _scanZoneToast.value = Pair(false, msg)
+            Firebase.crashlytics.setCustomKey("zone_id", zoneId)
+            Firebase.crashlytics.recordException(e)
             false
         } finally {
             _isLoading.value = false
@@ -118,6 +133,7 @@ class AuditViewModel : ViewModel() {
                     }
                 }
             }
+            Firebase.crashlytics.setUserId(userId)
             val request = ScanLocationRequest(
                 zone = _currentZoneId.value,
                 location = _currentLocationId.value,
@@ -149,6 +165,9 @@ class AuditViewModel : ViewModel() {
             _scanZoneError.value = msg
             _isLocationValidated.value = false
             _scanLocationToast.value = msg
+            Firebase.crashlytics.setCustomKey("zone_id", _currentZoneId.value)
+            Firebase.crashlytics.setCustomKey("location_id", _currentLocationId.value)
+            Firebase.crashlytics.recordException(e)
             false
         } finally {
             _isLoading.value = false
@@ -202,6 +221,9 @@ class AuditViewModel : ViewModel() {
             val msg = e.message ?: "Unknown error"
             _scanZoneError.value = msg
             _addStagingToast.value = Pair(false, msg)
+            Firebase.crashlytics.setCustomKey("zone_id", _currentZoneId.value)
+            Firebase.crashlytics.setCustomKey("location_id", _currentLocationId.value)
+            Firebase.crashlytics.recordException(e)
             false
         } finally {
             _isLoading.value = false
@@ -252,6 +274,8 @@ class AuditViewModel : ViewModel() {
         } catch (e: Exception) {
             val msg = e.message ?: "Unknown error"
             _scanZoneError.value = msg
+            Firebase.crashlytics.setCustomKey("zone_id", _currentZoneId.value)
+            Firebase.crashlytics.recordException(e)
             false
         } finally {
             _isLoading.value = false
