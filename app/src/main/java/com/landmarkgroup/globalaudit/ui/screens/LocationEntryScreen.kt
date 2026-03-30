@@ -274,7 +274,7 @@ fun LocationEntryScreen(
                             OutlinedTextField(
                                 value = quantity,
                                 onValueChange = { newValue ->
-                                    if (newValue.isEmpty() || newValue.all { it.isDigit() }) {
+                                    if ((newValue.isEmpty() || newValue.all { it.isDigit() }) && newValue.length <= 8) {
                                         onQuantityChange(newValue)
                                     }
                                 },
@@ -337,7 +337,7 @@ fun LocationEntryScreen(
                         }
 
                         // Add Bin Button changes color when quantity is entered
-                        val canAddBin = locationId.isNotBlank() && quantity.isNotBlank() && (quantity.toIntOrNull() ?: 0) > 0
+                        val canAddBin = locationId.isNotBlank()
                         if (canAddBin) {
                             Button(
                                 onClick = onAddBin,

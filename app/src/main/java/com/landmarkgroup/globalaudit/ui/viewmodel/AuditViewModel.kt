@@ -320,7 +320,7 @@ class AuditViewModel : ViewModel() {
         val locationId = _currentLocationId.value.trim()
         val quantity = _currentQuantity.value.trim().toIntOrNull() ?: 0
         
-        if (locationId.isNotEmpty() && quantity > 0) {
+        if (locationId.isNotEmpty()) {
             val currentData = _auditData.value ?: AuditData(zoneId = _currentZoneId.value)
             val newBin = LocationBin(locationId = locationId, quantity = quantity)
             // Upsert: keep only the latest record per locationId
