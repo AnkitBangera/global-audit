@@ -148,6 +148,9 @@ class AuditViewModel : ViewModel() {
                 val finalMessage = if (message.isNotBlank()) message else if (success) "Location accepted" else "Invalid Location ID"
                 if (success) {
                     _isLocationValidated.value = true
+                    if (_currentQuantity.value.isBlank()) {
+                        _currentQuantity.value = "0"
+                    }
                 } else {
                     _isLocationValidated.value = false
                     _scanLocationToast.value = finalMessage

@@ -279,7 +279,6 @@ fun LocationEntryScreen(
                                     }
                                 },
                                 modifier = Modifier.fillMaxWidth(),
-                                placeholder = { Text("0", color = Color(0xFFB0B7C3)) },
                                 shape = RoundedCornerShape(12.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = violet,
@@ -320,7 +319,10 @@ fun LocationEntryScreen(
                                         IconButton(
                                             onClick = {
                                                 val currentQty = quantity.toIntOrNull() ?: 0
-                                                onQuantityChange((currentQty + 1).toString())
+                                                val newQty = (currentQty + 1).toString()
+                                                if (newQty.length <= 8) {
+                                                    onQuantityChange(newQty)
+                                                }
                                             },
                                             modifier = Modifier.size(32.dp)
                                         ) {
