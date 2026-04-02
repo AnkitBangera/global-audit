@@ -7,6 +7,7 @@ import com.landmarkgroup.globalaudit.BuildConfig
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.landmarkgroup.globalaudit.data.model.AuthData
+import java.io.File
 
 /**
  * Settings manager for storing app preferences persistently.
@@ -35,16 +36,44 @@ object AppSettings {
     private const val KEY_GLOBAL_AUDIT_FLAG = "UI_FEATURE_GLOBAL_AUDIT_FACILITY_FLAG_ENABLED"
 
     private fun getSharedPreferences(context: Context): SharedPreferences {
-        val masterKey = MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
-        return EncryptedSharedPreferences.create(
-            context,
-            PREFS_NAME,
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+        return try {
+            val masterKey = MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+            EncryptedSharedPreferences.create(
+                context,
+                PREFS_NAME,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "EncryptedSharedPreferences init failed. Clearing corrupted prefs and retrying: ${e.message}")
+            // Attempt to delete the underlying shared_prefs file and retry
+            try {
+                // API 24+: preferred removal
+                context.deleteSharedPreferences(PREFS_NAME)
+            } catch (_: Throwable) {
+                // Fallback: remove the XML file directly
+                try {
+                    val prefsFile = File(context.applicationInfo.dataDir + "/shared_prefs/$PREFS_NAME.xml")
+                    if (prefsFile.exists()) {
+                        prefsFile.delete()
+                    }
+                } catch (_: Throwable) { /* ignore */ }
+            }
+            // Recreate a fresh encrypted SharedPreferences
+            val masterKey = MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+            EncryptedSharedPreferences.create(
+                context,
+                PREFS_NAME,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        }
     }
 
     /**

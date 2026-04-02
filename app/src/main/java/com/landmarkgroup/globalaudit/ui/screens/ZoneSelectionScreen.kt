@@ -36,14 +36,16 @@ fun ZoneSelectionScreen(
     onContinue: (String) -> Unit
 ) {
     var zoneId by remember { mutableStateOf("") }
+
+    // Register hardware scanner callback (Zebra/Honeywell) to populate Zone ID and continue
     val context = LocalContext.current
     DisposableEffect(Unit) {
         val owner = "ZoneSelectionScreen"
         if (context is MainActivity) {
             MainActivity.setScanResultCallback({ barcode ->
-                val scanned = barcode.trim()
-                zoneId = scanned
+                val scanned = barcode.trim().replace(" ", "")
                 if (scanned.isNotBlank() && !isLoading) {
+                    zoneId = scanned
                     onContinue(scanned)
                 }
             }, owner)
