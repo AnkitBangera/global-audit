@@ -3,6 +3,7 @@ package com.landmarkgroup.globalaudit.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -18,6 +19,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -37,6 +41,7 @@ import com.landmarkgroup.globalaudit.ui.utils.safeAreaPadding
 import androidx.compose.ui.platform.LocalContext
 import com.landmarkgroup.globalaudit.MainActivity
 import androidx.compose.foundation.BorderStroke
+import kotlinx.coroutines.delay
 
 @Composable
 fun LocationEntryScreen(
@@ -69,6 +74,15 @@ fun LocationEntryScreen(
 
     // Register hardware scanner callback (Zebra/Honeywell). Trim scanned data and auto-validate.
     val context = LocalContext.current
+    // Zone screen avoids auto-keyboard because a non-text focusable (back) comes before the field.
+    // This screen's first focusable is the location TextField, so Android/Compose assigns it initial
+    // focus after navigation. Steal default focus onto an invisible anchor; user tap still focuses the field.
+    val initialFocus = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        delay(100)
+        runCatching { initialFocus.requestFocus() }
+    }
+
     DisposableEffect(Unit) {
         val owner = "LocationEntryScreen"
         if (context is MainActivity) {
@@ -111,6 +125,13 @@ fun LocationEntryScreen(
             .safeAreaPadding()
             .padding(24.dp)
     ) {
+        Box(
+            modifier = Modifier
+                .size(1.dp)
+                .alpha(0f)
+                .focusRequester(initialFocus)
+                .focusable()
+        )
         // Header (ZONE + zoneId with accent bar + subtitle)
         Row(
             verticalAlignment = Alignment.CenterVertically
