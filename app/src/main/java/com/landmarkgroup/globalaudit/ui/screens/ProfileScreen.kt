@@ -4,10 +4,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
@@ -64,13 +62,12 @@ fun ProfileScreen(
             .fillMaxSize()
             .background(Color(0xFFF5F5F5))
             .safeAreaPadding()
-            .verticalScroll(rememberScrollState())
     ) {
         // Back button and header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBackClick) {
@@ -93,14 +90,14 @@ fun ProfileScreen(
             // Profile Picture
             Box(
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(72.dp)
                     .clip(CircleShape)
                     .background(Color(0xFF4A90E2)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = initials,
-                    fontSize = 36.sp,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
@@ -109,7 +106,7 @@ fun ProfileScreen(
             // User Name
             Text(
                 text = fullName,
-                fontSize = 24.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF333333)
             )
@@ -118,7 +115,7 @@ fun ProfileScreen(
             if (roles.isNotEmpty()) {
                 Text(
                     text = roles.first(),
-                    fontSize = 16.sp,
+                    fontSize = 13.sp,
                     color = Color(0xFF666666)
                 )
             }
@@ -128,13 +125,13 @@ fun ProfileScreen(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Name
                 ProfileDetailRow(
@@ -170,15 +167,15 @@ fun ProfileScreen(
             }
         }
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // Logout Button
         Button(
             onClick = onLogout,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 8.dp)
-                .height(56.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .height(48.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFFFEBEE),
@@ -196,7 +193,7 @@ fun ProfileScreen(
                 )
                 Text(
                     text = "LOGOUT ACCOUNT",
-                    fontSize = 16.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -221,7 +218,7 @@ private fun ProfileDetailRow(
             imageVector = icon,
             contentDescription = label,
             tint = Color(0xFF666666),
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(20.dp)
         )
         
         Column(
@@ -230,13 +227,13 @@ private fun ProfileDetailRow(
         ) {
             Text(
                 text = label,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 color = Color(0xFF999999),
                 fontWeight = FontWeight.Normal
             )
             Text(
                 text = value,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 color = Color(0xFF333333),
                 fontWeight = FontWeight.Medium
             )

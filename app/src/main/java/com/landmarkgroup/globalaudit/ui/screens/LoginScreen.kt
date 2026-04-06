@@ -175,12 +175,12 @@ private fun LoginContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         
         // Logo Icon at the top
         Box(
             modifier = Modifier
-                .size(80.dp)
+                .size(64.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(Color(0xFF4A90E2)),
             contentAlignment = Alignment.Center
@@ -197,7 +197,7 @@ private fun LoginContent(
         // Title
         Text(
             text = "Global Stock Audit",
-            fontSize = 28.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF333333)
         )
@@ -205,11 +205,11 @@ private fun LoginContent(
         // Subtitle
         Text(
             text = "Warehouse Operations",
-            fontSize = 16.sp,
+            fontSize = 13.sp,
             color = Color(0xFF666666)
         )
         
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(8.dp))
         
         // Login Card
         Column(
@@ -217,16 +217,16 @@ private fun LoginContent(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .background(Color.White)
-                .padding(32.dp),
+                .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Heading
             Text(
-                text = "Sign in with AD",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF333333)
+            text = "Sign in with AD",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF333333)
             )
             
             // Instructions
@@ -246,15 +246,13 @@ private fun LoginContent(
                 )
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
-            
             // Login Button
             Button(
                 onClick = onLoginClick,
                 enabled = enabled,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
+                    .height(48.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF4A90E2)
@@ -268,8 +266,6 @@ private fun LoginContent(
                 )
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
-            
             // Support Link
             Text(
                 text = "Trouble signing in? Contact IT Support",
@@ -279,6 +275,6 @@ private fun LoginContent(
             )
         }
         
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }

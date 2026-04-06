@@ -48,7 +48,7 @@ fun GlobalStockAuditScreen(
             .background(Color(0xFFF5F5F5))
             .safeAreaPadding()
             .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Welcome Header
         Column(
@@ -68,7 +68,7 @@ fun GlobalStockAuditScreen(
             )
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         
         // Main Operations Section
         Text(
@@ -83,7 +83,7 @@ fun GlobalStockAuditScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp)
+                .height(140.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .background(if (isAuditEnabled) Color(0xFF4A90E2) else Color(0xFFCFD8DC))
                 .clickable {
@@ -110,17 +110,17 @@ fun GlobalStockAuditScreen(
                     Image(
                         painter = painterResource(id = R.drawable.checklist),
                         contentDescription = "Checklist",
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(36.dp)
                     )
                     Text(
                         text = "Global Stock Audit",
-                        fontSize = 20.sp,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Text(
                         text = "Start a new zone audit",
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         color = Color.White.copy(alpha = 0.9f)
                     )
                 }
@@ -141,13 +141,13 @@ fun GlobalStockAuditScreen(
             }
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         
         // My Profile Card
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(120.dp)
+                .heightIn(min = 80.dp) // allow the card to grow on smaller screens to prevent subtitle clipping
                 .clip(RoundedCornerShape(16.dp))
                 .background(Color.White)
                 .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(16.dp))
@@ -157,7 +157,7 @@ fun GlobalStockAuditScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
