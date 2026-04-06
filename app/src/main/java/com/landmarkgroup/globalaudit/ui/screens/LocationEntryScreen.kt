@@ -58,7 +58,9 @@ fun LocationEntryScreen(
     onSummary: () -> Unit,
     showCancelDialog: Boolean,
     onDismissCancelDialog: () -> Unit,
-    onConfirmCancel: () -> Unit
+    onConfirmCancel: () -> Unit,
+    scanLocationErrorMessage: String?,
+    onDismissScanLocationError: () -> Unit
 ) {
     // Location is only "valid" once scan-location returns returnCode=Y.
     val isLocationValid = isLocationValidated
@@ -66,6 +68,7 @@ fun LocationEntryScreen(
     // Local state for location text field and debounce to avoid keyboard-wedge interference after DATA_INTENT
     var localLocationId by remember { mutableStateOf(locationId) }
     var lastDataIntentMs by remember { mutableStateOf(0L) }
+    var lastScannedBarcode by remember { mutableStateOf("") }
 
     // Keep local text in sync when ViewModel updates (e.g., after addBin/clear or when DI sets value)
     LaunchedEffect(locationId) {
@@ -89,11 +92,20 @@ fun LocationEntryScreen(
             MainActivity.setScanResultCallback({ barcode ->
                 val scanned = barcode.trim()
                 if (scanned.isNotBlank()) {
-                    // Record DI timestamp and set local field, then update VM and trigger scan
-                    lastDataIntentMs = System.currentTimeMillis()
-                    localLocationId = scanned
-                    onLocationIdChange(scanned)
-                    onScanLocation()
+                    val now = System.currentTimeMillis()
+                    // Deduplicate: ignore same barcode within 1000ms to avoid repeated intents/keyboard wedge
+                    if (scanned == lastScannedBarcode && (now - lastDataIntentMs) < 1000L) {
+                        // ignore duplicate
+                    } else {
+                        // Record DI timestamp and clear then set local field, then update VM and trigger scan
+                        lastScannedBarcode = scanned
+                        lastDataIntentMs = now
+                        localLocationId = ""
+                        onLocationIdChange("")
+                        localLocationId = scanned
+                        onLocationIdChange(scanned)
+                        onScanLocation()
+                    }
                 }
             }, owner)
         }
@@ -203,7 +215,7 @@ fun LocationEntryScreen(
                                 val sanitized = newValue.replace(" ", "")
                                 val sinceDI = System.currentTimeMillis() - lastDataIntentMs
                                 // Accept keyboard input only if no recent DATA_INTENT scan
-                                if (sinceDI > 500L) {
+                                if (sinceDI > 1000L) {
                                     localLocationId = sanitized
                                 }
                             },
@@ -212,7 +224,7 @@ fun LocationEntryScreen(
                                 .onPreviewKeyEvent { event ->
                                     if (event.type == KeyEventType.KeyDown && event.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_ENTER) {
                                         val sinceDI = System.currentTimeMillis() - lastDataIntentMs
-                                        if (sinceDI > 500L && localLocationId.isNotBlank()) {
+                                        if (sinceDI > 1000L && localLocationId.isNotBlank()) {
                                             onLocationIdChange(localLocationId.trim())
                                             onScanLocation()
                                         }
@@ -234,7 +246,7 @@ fun LocationEntryScreen(
                             keyboardActions = KeyboardActions(
                                 onDone = {
                                     val sinceDI = System.currentTimeMillis() - lastDataIntentMs
-                                    if (sinceDI > 500L && localLocationId.isNotBlank()) {
+                                    if (sinceDI > 1000L && localLocationId.isNotBlank()) {
                                         onLocationIdChange(localLocationId.trim())
                                         onScanLocation()
                                     }
@@ -427,6 +439,34 @@ fun LocationEntryScreen(
         
         Spacer(modifier = Modifier.weight(1f))
         
+        // Red bottom toast for scan-location errors
+        val errorMsg = scanLocationErrorMessage
+        LaunchedEffect(errorMsg) {
+            if (!errorMsg.isNullOrBlank()) {
+                delay(3000)
+                onDismissScanLocationError()
+            }
+        }
+        AnimatedVisibility(
+            visible = !errorMsg.isNullOrBlank(),
+            enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
+            exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp)
+                    .background(Color(0xFFB91C1C), RoundedCornerShape(12.dp))
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Text(
+                    text = errorMsg ?: "",
+                    color = Color.White,
+                    fontSize = 14.sp
+                )
+            }
+        }
+
         // Bottom Buttons
         Row(
             modifier = Modifier.fillMaxWidth(),

@@ -36,6 +36,8 @@ fun ZoneSelectionScreen(
     onContinue: (String) -> Unit
 ) {
     var zoneId by remember { mutableStateOf("") }
+    var lastScanMs by remember { mutableStateOf(0L) }
+    var lastScannedBarcode by remember { mutableStateOf("") }
 
     // Register hardware scanner callback (Zebra/Honeywell) to populate Zone ID and continue
     val context = LocalContext.current
@@ -45,8 +47,18 @@ fun ZoneSelectionScreen(
             MainActivity.setScanResultCallback({ barcode ->
                 val scanned = barcode.trim().replace(" ", "")
                 if (scanned.isNotBlank() && !isLoading) {
-                    zoneId = scanned
-                    onContinue(scanned)
+                    val now = System.currentTimeMillis()
+                    // Deduplicate: ignore same barcode within 1000ms to avoid repeated intents/keyboard wedge
+                    if (scanned == lastScannedBarcode && (now - lastScanMs) < 1000L) {
+                        // ignore duplicate
+                    } else {
+                        // Record DI timestamp and clear then set field, then continue
+                        lastScannedBarcode = scanned
+                        lastScanMs = now
+                        zoneId = ""
+                        zoneId = scanned
+                        onContinue(scanned)
+                    }
                 }
             }, owner)
         }
@@ -137,7 +149,12 @@ fun ZoneSelectionScreen(
                     
                     OutlinedTextField(
                         value = zoneId,
-                        onValueChange = { zoneId = it.replace(" ", "") },
+                        onValueChange = {
+                            val sinceDI = System.currentTimeMillis() - lastScanMs
+                            if (sinceDI > 1000L) {
+                                zoneId = it.replace(" ", "")
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = { Text("ZONE ID", color = Color(0xFF999999)) },
                         shape = RoundedCornerShape(8.dp),

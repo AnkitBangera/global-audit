@@ -176,12 +176,6 @@ fun NavGraph(
             var showCancelDialog by remember { mutableStateOf(false) }
             BackHandler { showCancelDialog = true }
 
-            LaunchedEffect(locationToast) {
-                locationToast?.takeIf { it.isNotBlank() }?.let { msg ->
-                    ToastUtils.show(context, msg, false)
-                    auditViewModel.clearScanLocationToast()
-                }
-            }
 
             LaunchedEffect(addStagingToast) {
                 addStagingToast?.let { pair ->
@@ -233,7 +227,9 @@ fun NavGraph(
                     navController.navigate(Screen.ZoneSelection.route) {
                         popUpTo(Screen.ZoneSelection.route) { inclusive = true }
                     }
-                }
+                },
+                scanLocationErrorMessage = locationToast,
+                onDismissScanLocationError = { auditViewModel.clearScanLocationToast() }
             )
         }
         

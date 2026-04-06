@@ -22,6 +22,7 @@ import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.analytics.logEvent
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.ktx.Firebase
+import org.json.JSONObject
 
 class AuditViewModel : ViewModel() {
     private val _auditData = MutableStateFlow<AuditData?>(null)
@@ -73,6 +74,7 @@ class AuditViewModel : ViewModel() {
     }
 
     suspend fun scanZone(zoneId: String): Boolean {
+        if (_isLoading.value) return false
         _isLoading.value = true
         _scanZoneError.value = null
         return try {
@@ -115,6 +117,7 @@ class AuditViewModel : ViewModel() {
     }
     
     suspend fun scanLocation(context: Context): Boolean {
+        if (_isLoading.value) return false
         _isLoading.value = true
         _scanZoneError.value = null
         return try {
@@ -157,7 +160,11 @@ class AuditViewModel : ViewModel() {
                 }
                 success
             } else {
-                val msg = "Scan location failed: ${response.code()}"
+                val errorBody = try { response.errorBody()?.string() } catch (_: Exception) { null }
+                val backendMsg = try {
+                    if (!errorBody.isNullOrBlank()) JSONObject(errorBody).optString("errorMessage") else ""
+                } catch (_: Exception) { "" }
+                val msg = if (backendMsg.isNotBlank()) backendMsg else "Scan location failed: ${response.code()}"
                 _scanZoneError.value = msg
                 _isLocationValidated.value = false
                 _scanLocationToast.value = msg
