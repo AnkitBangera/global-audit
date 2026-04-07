@@ -83,7 +83,7 @@ class AuditViewModel : ViewModel() {
                 val body = response.body()
                 val success = body?.returnCode.equals("Y", true)
                 val message = body?.errorMessage ?: ""
-                val finalMessage = if (message.isNotBlank()) message else if (success) "Zone accepted" else "Invalid Zone ID"
+                val finalMessage = if (success) if (message.isNotBlank()) message else "Zone accepted" else message
                 _scanZoneToast.value = Pair(success, finalMessage)
                 if (!success) {
                     _scanZoneError.value = finalMessage
@@ -148,7 +148,7 @@ class AuditViewModel : ViewModel() {
                 val body = response.body()
                 val success = body?.returnCode.equals("Y", true)
                 val message = body?.errorMessage ?: ""
-                val finalMessage = if (message.isNotBlank()) message else if (success) "Location accepted" else "Invalid Location ID"
+                val finalMessage = if (success) if (message.isNotBlank()) message else "Location accepted" else message
                 if (success) {
                     _isLocationValidated.value = true
                     if (_currentQuantity.value.isBlank()) {
@@ -215,7 +215,7 @@ class AuditViewModel : ViewModel() {
                 val body = response.body()
                 val success = body?.returnCode.equals("Y", true)
                 val message = body?.errorMessage ?: ""
-                val finalMessage = if (message.isNotBlank()) message else if (success) "Added to staging" else "Add staging failed"
+                val finalMessage = if (success) if (message.isNotBlank()) message else "Added to staging" else message
                 _addStagingToast.value = Pair(success, finalMessage)
                 if (!success) {
                     _scanZoneError.value = finalMessage
@@ -395,7 +395,7 @@ class AuditViewModel : ViewModel() {
                 val body = response.body()
                 val success = body?.returnCode.equals("Y", true)
                 val message = body?.errorMessage ?: ""
-                val finalMessage = if (message.isNotBlank()) message else if (success) "Submitted successfully" else "Submit failed"
+                val finalMessage = if (success) if (message.isNotBlank()) message else "Submitted successfully" else message
                 Pair(success, finalMessage)
             } else {
                 Pair(false, "Submit failed: ${response.code()}")

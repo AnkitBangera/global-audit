@@ -126,22 +126,12 @@ fun NavGraph(
             val isLoading by auditViewModel.isLoading.collectAsState()
             val errorMessage by auditViewModel.scanZoneError.collectAsState()
             val scope = rememberCoroutineScope()
-            val toastEvent by auditViewModel.scanZoneToast.collectAsState()
-            val context = androidx.compose.ui.platform.LocalContext.current
 
             // Clear any lingering scan-zone error when entering this screen
             LaunchedEffect(Unit) {
                 auditViewModel.clearScanZoneError()
             }
 
-            LaunchedEffect(toastEvent) {
-                toastEvent?.let { pair ->
-                    val success = pair.first
-                    val msg = pair.second
-                    ToastUtils.show(context, msg, success)
-                    auditViewModel.clearScanZoneToast()
-                }
-            }
 
             ZoneSelectionScreen(
                 isLoading = isLoading,
@@ -157,7 +147,8 @@ fun NavGraph(
                             navController.navigate(Screen.LocationEntry.route)
                         }
                     }
-                }
+                },
+                onDismissError = { auditViewModel.clearScanZoneError() }
             )
         }
         

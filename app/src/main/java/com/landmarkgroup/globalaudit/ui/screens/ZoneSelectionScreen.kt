@@ -16,24 +16,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.landmarkgroup.globalaudit.ui.utils.safeAreaPadding
 import androidx.compose.ui.platform.LocalContext
 import com.landmarkgroup.globalaudit.MainActivity
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import kotlinx.coroutines.delay
 
 @Composable
 fun ZoneSelectionScreen(
     isLoading: Boolean,
     errorMessage: String?,
     onBackClick: () -> Unit,
-    onContinue: (String) -> Unit
+    onContinue: (String) -> Unit,
+    onDismissError: () -> Unit
 ) {
     var zoneId by remember { mutableStateOf("") }
     var lastScanMs by remember { mutableStateOf(0L) }
@@ -117,6 +124,14 @@ fun ZoneSelectionScreen(
         )
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        // Auto-dismiss error chip after 3s
+        LaunchedEffect(errorMessage) {
+            if (!errorMessage.isNullOrBlank()) {
+                delay(3000)
+                onDismissError()
+            }
+        }
         
         // Input Card
         Card(
@@ -186,13 +201,6 @@ fun ZoneSelectionScreen(
                 }
                 
                 // Continue Button
-                if (errorMessage != null) {
-                    Text(
-                        text = errorMessage ?: "",
-                        color = Color(0xFFD32F2F),
-                        fontSize = 14.sp
-                    )
-                }
                 Button(
                     onClick = {
                         if (zoneId.isNotBlank()) {
@@ -229,6 +237,28 @@ fun ZoneSelectionScreen(
                         }
                     }
                 }
+            }
+        }
+
+        // Error chip below the entire card (not overlapping the button)
+        AnimatedVisibility(
+            visible = !errorMessage.isNullOrBlank(),
+            enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
+            exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp) // space below card
+                    .padding(horizontal = 8.dp)
+                    .background(Color(0xFFB91C1C), RoundedCornerShape(12.dp))
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Text(
+                    text = errorMessage ?: "",
+                    color = Color.White,
+                    fontSize = 14.sp
+                )
             }
         }
     }
