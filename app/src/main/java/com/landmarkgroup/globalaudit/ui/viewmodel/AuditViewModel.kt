@@ -99,7 +99,7 @@ class AuditViewModel : ViewModel() {
                 }
                 success
             } else {
-                val msg = "Scan zone failed"
+                val msg = if (response.code() == 401) "Session expired. Please log in again." else "Scan zone failed"
                 _scanZoneError.value = msg
                 _scanZoneToast.value = Pair(false, msg)
                 false
@@ -164,7 +164,7 @@ class AuditViewModel : ViewModel() {
                 val backendMsg = try {
                     if (!errorBody.isNullOrBlank()) JSONObject(errorBody).optString("errorMessage") else ""
                 } catch (_: Exception) { "" }
-                val msg = if (backendMsg.isNotBlank()) backendMsg else "Scan location failed: ${response.code()}"
+                val msg = if (response.code() == 401) "Session expired. Please log in again." else if (backendMsg.isNotBlank()) backendMsg else "Scan location failed: ${response.code()}"
                 _scanZoneError.value = msg
                 _isLocationValidated.value = false
                 _scanLocationToast.value = msg
@@ -222,7 +222,7 @@ class AuditViewModel : ViewModel() {
                 }
                 success
             } else {
-                val msg = "Add staging failed: ${response.code()}"
+                val msg = if (response.code() == 401) "Session expired. Please log in again." else "Add staging failed: ${response.code()}"
                 _scanZoneError.value = msg
                 _addStagingToast.value = Pair(false, msg)
                 false
@@ -277,7 +277,7 @@ class AuditViewModel : ViewModel() {
                 _auditData.value = AuditData(zoneId = zone, bins = bins)
                 true
             } else {
-                val msg = "Fetch summary failed: ${response.code()}"
+                val msg = if (response.code() == 401) "Session expired. Please log in again." else "Fetch summary failed: ${response.code()}"
                 _scanZoneError.value = msg
                 false
             }
@@ -398,7 +398,7 @@ class AuditViewModel : ViewModel() {
                 val finalMessage = if (success) if (message.isNotBlank()) message else "Submitted successfully" else message
                 Pair(success, finalMessage)
             } else {
-                Pair(false, "Submit failed: ${response.code()}")
+                Pair(false, if (response.code() == 401) "Session expired. Please log in again." else "Submit failed: ${response.code()}")
             }
         } catch (e: Exception) {
             Pair(false, e.message ?: "Unknown error")
