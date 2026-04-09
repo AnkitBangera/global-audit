@@ -19,6 +19,8 @@ import com.landmarkgroup.globalaudit.utils.JwtUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.analytics.logEvent
 import com.google.firebase.crashlytics.ktx.crashlytics
@@ -51,6 +53,7 @@ class LoginViewModel(
 
     private var lastAuthRequest: AuthorizationRequest? = null
     private lateinit var serviceConfig: AuthorizationServiceConfiguration
+    private var refreshJob: Job? = null
 
     init {
         // Initialize device ID on app startup (similar to Xamarin's ValidateDevice)
@@ -66,6 +69,8 @@ class LoginViewModel(
         // If session is still valid, skip ADFS and go straight into the app
         if (isSessionValid(SharedAuthData.getAuthData())) {
             _uiState.value = LoginUiState.NavigateToMainApp
+            // Proactive refresh scheduling on cold start with valid session
+            scheduleProactiveRefresh()
         }
 
         serviceConfig = AuthorizationServiceConfiguration(
@@ -195,6 +200,8 @@ class LoginViewModel(
                     Firebase.analytics.logEvent("adfs_token_exchange_success") {
                         param("has_refresh", if (refreshToken != null) "1" else "0")
                     }
+                    // Schedule proactive refresh ~50 minutes after login
+                    scheduleProactiveRefresh()
                     authorizeWithBackend()
                 } else {
                     Firebase.analytics.logEvent("adfs_token_exchange_failure") { }
@@ -342,6 +349,8 @@ class LoginViewModel(
                     SharedAuthData.setAuthData(auth)
                     AppSettings.saveAuthData(appContext, auth)
                 }
+                // Reschedule proactive refresh after successful silent refresh
+                scheduleProactiveRefresh()
             } else {
                 // Hard failure - force re-login
                 Firebase.analytics.logEvent("refresh_token_failed") { }
@@ -351,7 +360,40 @@ class LoginViewModel(
         }
     }
 
+    /**
+     * Schedules a proactive token refresh ~50 minutes from now (before the 60-minute expiry).
+     * Resets on each successful login/refresh. Requires a non-empty refresh token.
+     */
+    fun scheduleProactiveRefresh() {
+        val current = SharedAuthData.getAuthData() ?: return
+        val hasRefresh = !current.refreshTokenKey.isNullOrBlank()
+        if (!hasRefresh) return
+
+        // Cancel any existing scheduled job to avoid multiple timers
+        refreshJob?.cancel()
+        refreshJob = viewModelScope.launch {
+            // Compute delay until 10 minutes before expiry; if negative, refresh immediately
+            val now = System.currentTimeMillis()
+            val tenMinutesMs = 10 * 60 * 1000L
+            val targetAt = (current.expiresOnKey - tenMinutesMs).coerceAtLeast(now)
+            val delayMs = (targetAt - now).coerceAtLeast(0L)
+            if (BuildConfig.DEBUG) {
+                Log.d(
+                    "LoginViewModel",
+                    "Scheduling proactive refresh in ${delayMs}ms (target=${targetAt}, expiresOn=${current.expiresOnKey})."
+                )
+            }
+            delay(delayMs)
+            if (BuildConfig.DEBUG) {
+                Log.d("LoginViewModel", "Proactive refresh firing; attempting silent refresh.")
+            }
+            silentRefreshToken()
+        }
+    }
+
     fun logout() {
+        refreshJob?.cancel()
+        refreshJob = null
         SharedAuthData.clearAuthData()
         AppSettings.clearAuthData(appContext)
         _uiState.value = LoginUiState.Idle

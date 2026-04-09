@@ -19,6 +19,12 @@ import com.landmarkgroup.globalaudit.ui.viewmodel.AuditViewModel
 import com.landmarkgroup.globalaudit.ui.viewmodel.LoginViewModel
 import com.landmarkgroup.globalaudit.ui.utils.ToastUtils
 import androidx.activity.compose.BackHandler
+import com.landmarkgroup.globalaudit.utils.SessionEvents
+import kotlinx.coroutines.flow.collectLatest
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -66,6 +72,43 @@ fun NavGraph(
                 popUpTo(0) { inclusive = true }
             }
         }
+    }
+
+    // Also react to session-expired events emitted from non-Android layers (e.g., AuthInterceptor)
+    LaunchedEffect("sessionEvents") {
+        SessionEvents.sessionExpired.collectLatest {
+            navController.navigate(Screen.Login.route) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
+    // On app foreground resume, verify session and attempt silent refresh if expired (Xamarin parity)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                val authData = SharedAuthData.getAuthData()
+                val isExpired = authData == null ||
+                        authData.idTokenKey.isNullOrEmpty() ||
+                        authData.expiresOnKey <= System.currentTimeMillis()
+                if (isExpired) {
+                    val hasRefresh = authData?.refreshTokenKey?.isNotBlank() == true
+                    if (hasRefresh) {
+                        // Try silent refresh; NavGraph will navigate on sessionExpired if it fails
+                        loginViewModel.silentRefreshToken()
+                    } else {
+                        // No refresh path available - force re-login
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                }
+            }
+        }
+        val lifecycle = lifecycleOwner.lifecycle
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
     }
 
     // Periodically refresh tokens silently when nearing expiry
