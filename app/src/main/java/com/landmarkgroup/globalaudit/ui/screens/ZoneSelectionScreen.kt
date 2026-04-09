@@ -33,6 +33,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import kotlinx.coroutines.delay
+import com.landmarkgroup.globalaudit.ui.utils.AppOutlinedTextField
+import com.landmarkgroup.globalaudit.ui.utils.AppKeyboardDefaults
 
 @Composable
 fun ZoneSelectionScreen(
@@ -162,7 +164,7 @@ fun ZoneSelectionScreen(
                         letterSpacing = 1.0.sp
                     )
                     
-                    OutlinedTextField(
+                    AppOutlinedTextField(
                         value = zoneId,
                         onValueChange = {
                             val sinceDI = System.currentTimeMillis() - lastScanMs
@@ -177,10 +179,7 @@ fun ZoneSelectionScreen(
                             focusedBorderColor = Color(0xFF4A90E2),
                             unfocusedBorderColor = Color(0xFFE0E0E0)
                         ),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Done
-                        ),
+                        keyboardOptions = AppKeyboardDefaults.UppercaseText,
                         keyboardActions = KeyboardActions(
                             onDone = {
                                 if (zoneId.isNotBlank()) {

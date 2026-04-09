@@ -42,6 +42,8 @@ import androidx.compose.ui.platform.LocalContext
 import com.landmarkgroup.globalaudit.MainActivity
 import androidx.compose.foundation.BorderStroke
 import kotlinx.coroutines.delay
+import com.landmarkgroup.globalaudit.ui.utils.AppOutlinedTextField
+import com.landmarkgroup.globalaudit.ui.utils.AppKeyboardDefaults
 
 @Composable
 fun LocationEntryScreen(
@@ -209,7 +211,7 @@ fun LocationEntryScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        OutlinedTextField(
+                        AppOutlinedTextField(
                             value = localLocationId,
                             onValueChange = { newValue ->
                                 val sanitized = newValue.replace(" ", "")
@@ -239,10 +241,7 @@ fun LocationEntryScreen(
                                 focusedBorderColor = violet,
                                 unfocusedBorderColor = if (isLocationValid) violet else Color(0xFFE0E0E0)
                             ),
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Text,
-                                imeAction = ImeAction.Done
-                            ),
+                            keyboardOptions = AppKeyboardDefaults.UppercaseText,
                             keyboardActions = KeyboardActions(
                                 onDone = {
                                     val sinceDI = System.currentTimeMillis() - lastDataIntentMs

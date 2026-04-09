@@ -131,7 +131,9 @@ class MainActivity : ComponentActivity() {
             }
 
             if (resultInfo.isNotBlank() && scanResultCallback != null) {
-                scanResultCallback?.invoke(resultInfo)
+                // Normalize all scanned inputs to uppercase once, centrally
+                val normalized = resultInfo.uppercase()
+                scanResultCallback?.invoke(normalized)
             } else {
                 Log.d(
                     "MainActivity",
