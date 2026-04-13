@@ -62,7 +62,9 @@ fun LocationEntryScreen(
     onDismissCancelDialog: () -> Unit,
     onConfirmCancel: () -> Unit,
     scanLocationErrorMessage: String?,
-    onDismissScanLocationError: () -> Unit
+    onDismissScanLocationError: () -> Unit,
+    addStagingErrorMessage: String? = null,
+    onDismissAddStagingError: () -> Unit = {}
 ) {
     // Location is only "valid" once scan-location returns returnCode=Y.
     val isLocationValid = isLocationValidated
@@ -370,8 +372,9 @@ fun LocationEntryScreen(
                             )
                         }
 
-                        // Add Bin Button changes color when quantity is entered
-                        val canAddBin = locationId.isNotBlank()
+                        // Add Bin enabled only when locationId and quantity are both non-blank.
+                        // User must explicitly enter a quantity (including "0") before enabling.
+                        val canAddBin = locationId.isNotBlank() && quantity.isNotBlank()
                         if (canAddBin) {
                             Button(
                                 onClick = onAddBin,
@@ -460,6 +463,34 @@ fun LocationEntryScreen(
             ) {
                 Text(
                     text = errorMsg ?: "",
+                    color = Color.White,
+                    fontSize = 14.sp
+                )
+            }
+        }
+
+        // Red bottom toast for add-staging errors (same style as scan-location)
+        val addStagingMsg = addStagingErrorMessage
+        LaunchedEffect(addStagingMsg) {
+            if (!addStagingMsg.isNullOrBlank()) {
+                delay(3000)
+                onDismissAddStagingError()
+            }
+        }
+        AnimatedVisibility(
+            visible = !addStagingMsg.isNullOrBlank(),
+            enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
+            exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp)
+                    .background(Color(0xFFB91C1C), RoundedCornerShape(12.dp))
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Text(
+                    text = addStagingMsg ?: "",
                     color = Color.White,
                     fontSize = 14.sp
                 )

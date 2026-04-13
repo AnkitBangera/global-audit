@@ -18,10 +18,11 @@ import com.landmarkgroup.globalaudit.utils.DeviceUtils
 import com.landmarkgroup.globalaudit.utils.JwtUtils
 import com.landmarkgroup.globalaudit.utils.AppSettings
 import android.content.Context
+import com.google.firebase.Firebase
+import com.google.firebase.analytics.analytics
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.analytics.logEvent
-import com.google.firebase.crashlytics.ktx.crashlytics
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.crashlytics.crashlytics
 import org.json.JSONObject
 
 class AuditViewModel : ViewModel() {
@@ -151,9 +152,6 @@ class AuditViewModel : ViewModel() {
                 val finalMessage = if (success) if (message.isNotBlank()) message else "Location accepted" else message
                 if (success) {
                     _isLocationValidated.value = true
-                    if (_currentQuantity.value.isBlank()) {
-                        _currentQuantity.value = "0"
-                    }
                 } else {
                     _isLocationValidated.value = false
                     _scanLocationToast.value = finalMessage
@@ -222,7 +220,11 @@ class AuditViewModel : ViewModel() {
                 }
                 success
             } else {
-                val msg = if (response.code() == 401) "Session expired. Please log in again." else "Add staging failed: ${response.code()}"
+                val errorBody = try { response.errorBody()?.string() } catch (_: Exception) { null }
+                val backendMsg = try {
+                    if (!errorBody.isNullOrBlank()) JSONObject(errorBody).optString("errorMessage") else ""
+                } catch (_: Exception) { "" }
+                val msg = if (response.code() == 401) "Session expired. Please log in again." else if (backendMsg.isNotBlank()) backendMsg else "Add staging failed: ${response.code()}"
                 _scanZoneError.value = msg
                 _addStagingToast.value = Pair(false, msg)
                 false

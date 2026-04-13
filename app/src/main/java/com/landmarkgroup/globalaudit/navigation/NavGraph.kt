@@ -206,6 +206,7 @@ fun NavGraph(
             val addStagingToast by auditViewModel.addStagingToast.collectAsState()
             val scope = rememberCoroutineScope()
             val context = androidx.compose.ui.platform.LocalContext.current
+            var addStagingErrorMessage by remember { mutableStateOf<String?>(null) }
             
             var showCancelDialog by remember { mutableStateOf(false) }
             BackHandler { showCancelDialog = true }
@@ -215,7 +216,12 @@ fun NavGraph(
                 addStagingToast?.let { pair ->
                     val success = pair.first
                     val msg = pair.second
-                    ToastUtils.show(context, msg, success)
+                    if (success) {
+                        ToastUtils.show(context, if (msg.isNotBlank()) msg else "Added to staging", true)
+                    } else {
+                        // Show same red in-screen banner style as scan-location errors
+                        addStagingErrorMessage = msg
+                    }
                     auditViewModel.clearAddStagingToast()
                 }
             }
@@ -263,7 +269,9 @@ fun NavGraph(
                     }
                 },
                 scanLocationErrorMessage = locationToast,
-                onDismissScanLocationError = { auditViewModel.clearScanLocationToast() }
+                onDismissScanLocationError = { auditViewModel.clearScanLocationToast() },
+                addStagingErrorMessage = addStagingErrorMessage,
+                onDismissAddStagingError = { addStagingErrorMessage = null }
             )
         }
         

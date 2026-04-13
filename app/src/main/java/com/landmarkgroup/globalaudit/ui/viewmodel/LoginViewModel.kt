@@ -7,6 +7,8 @@ import android.util.Log
 import com.landmarkgroup.globalaudit.BuildConfig
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.Firebase
+import com.google.firebase.analytics.analytics
 import com.landmarkgroup.globalaudit.data.model.AuthData
 import com.landmarkgroup.globalaudit.data.model.AuthorizationResponse
 import com.landmarkgroup.globalaudit.data.model.SharedAuthData
@@ -21,10 +23,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.analytics.logEvent
-import com.google.firebase.crashlytics.ktx.crashlytics
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.crashlytics.crashlytics
 import net.openid.appauth.*
 
 sealed class LoginUiState {

@@ -1,5 +1,6 @@
 package com.landmarkgroup.globalaudit
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -18,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.Firebase
+import com.google.firebase.analytics.analytics
 import com.landmarkgroup.globalaudit.data.model.SharedAuthData
 import com.landmarkgroup.globalaudit.navigation.NavGraph
 import com.landmarkgroup.globalaudit.ui.theme.GlobalAuditTheme
@@ -27,7 +30,6 @@ import com.landmarkgroup.globalaudit.utils.AuthConstants
 import android.os.Bundle as OsBundle
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.analytics.logEvent
-import com.google.firebase.ktx.Firebase
 import com.landmarkgroup.globalaudit.BuildConfig
 
 class MainActivity : ComponentActivity() {
@@ -239,6 +241,7 @@ class MainActivity : ComponentActivity() {
     }
 
     // Zebra setup
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     private fun configZebraScannerAndReceiver() {
         configureZebraDataWedgeProfile()
 
@@ -378,6 +381,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     private fun configHoneywellScannerReceiver() {
         val filter = IntentFilter().apply {
             // Honeywell intents
